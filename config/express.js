@@ -36,8 +36,14 @@ app.use(sanitizeInput);
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 
-// Define allowed origins from environment
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:8080,https://packkme.com').split(',');
+
+const allowedOrigins = [
+  'http://localhost:8080',   
+  'http://localhost:8081',   
+  'https://packkme.com'      
+];
+
+
 
 // Configure CORS
 const corsOptions = {
