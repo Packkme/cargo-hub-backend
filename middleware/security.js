@@ -94,14 +94,24 @@ const sanitizeInput = (req, res, next) => {
 // CORS validation middleware
 const validateCORS = (req, res, next) => {
   const origin = req.get('Origin');
-  const allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',');
-  
-  if (origin && !allowedOrigins.includes(origin)) {
-    return next(new AppError('CORS policy violation', 403, 'CORS_VIOLATION'));
+
+  // Must match the same origins you allow in express.js
+  const allowedOrigins = [
+    'http://localhost:8080',
+    'http://localhost:8081',
+    'https://packkme.com'
+  ];
+
+  // Allow requests with no Origin
+  if (!origin) return next();
+
+  if (allowedOrigins.includes(origin)) {
+    return next();
   }
-  
-  next();
+
+  return next(new AppError('CORS policy violation', 403, 'CORS_VIOLATION'));
 };
+
 
 module.exports = {
   generalLimiter,
