@@ -96,11 +96,7 @@ const validateCORS = (req, res, next) => {
   const origin = req.get('Origin');
 
   // Must match the same origins you allow in express.js
-  const allowedOrigins = [
-    'http://localhost:8080',
-    'http://localhost:8081',
-    'https://packkme.com'
-  ];
+  const allowedOrigins = (process.env.ALLOWED_ORIGINS).split(',');
 
   // Allow requests with no Origin
   if (!origin) return next();
