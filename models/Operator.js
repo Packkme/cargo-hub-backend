@@ -55,6 +55,11 @@ const operatorSchema = new mongoose.Schema({
     type: String, 
     default: 'booking-confirmation-template.html',
     description: 'Name of the HTML template file for bookings'
+  },
+  whatsappConfig: {
+    apiKey: { type: String },
+    phoneNumber: { type: String },
+    feedbackTemplateName: { type: String },
   }
 });
 

@@ -9,8 +9,17 @@ const fs = require('fs');
 const path = require('path');
 
 let API_URL = config.WHATSAPP_MESSAGE_URL;
-let API_KEY = config.WHATSAPP_API_TOKEN;
 let MEDIA_API_URL = config.WHATSAPP_MEDIA_URL;
+let CONVO_API_URL = config.WHATSAPP_CONVERSATION_URL;
+
+// Helper to get effective config
+const getEffectiveConfig = (operatorConfig) => {
+    return {
+        apiKey: operatorConfig?.apiKey,
+        phoneNumber: operatorConfig?.phoneNumber,
+        feedbackTemplateName: operatorConfig?.feedbackTemplateName
+    };
+};
 
 /**
  * Format phone number
@@ -21,6 +30,7 @@ function formatPhoneNumber(phoneNumber) {
     logger.info('Formatting phone number', {
         phoneNumber
     });
+    if (!phoneNumber) return '';
     if (phoneNumber.length === 10) {
         phoneNumber = '91' + phoneNumber;
     }
@@ -42,14 +52,18 @@ function formatPhoneNumber(phoneNumber) {
  * @param {string} templateName - Template name
  * @param {Array} attributes - Template attributes should be passed in specified template order only
  * @param {string} mediaId - Media ID
+ * @param {object} operatorConfig - Operator specific whatsapp config
  * @returns {Promise<object>} - Response from WhatsApp API
  */
-async function sendWhatsAppTemplateMessage(mobile, templateName, attributes, mediaId) {
+async function sendWhatsAppTemplateMessage(mobile, templateName, attributes, mediaId, operatorConfig = {}) {
     logger.info('Sending WhatsApp template message', {
         mobile,
         templateName,
         attributes
     });
+
+    const effectiveConfig = getEffectiveConfig(operatorConfig);
+    const API_KEY = effectiveConfig.apiKey;
 
     const payload = {
         message: [
@@ -87,7 +101,7 @@ async function sendWhatsAppTemplateMessage(mobile, templateName, attributes, med
             }
         });
 
-        if ( response.status !== 200 && response.data.status.toLowerCase() !== 'success') {
+        if (response.status !== 200 || response.data.status.toLowerCase() !== 'success') {
             logger.error(`Failed to send WhatsApp message: ${response.data}`);
             return { success: false, error: response.data };
         }
@@ -102,16 +116,22 @@ async function sendWhatsAppTemplateMessage(mobile, templateName, attributes, med
 /**
  * Saves WhatsApp conversation and message
  * @param {string} message - The WhatsApp message content
- * @param {object} cargoBooking - The cargo booking object
+ * @param {object} bookingReferenceData - The cargo booking object
  * @param {object} response - Response from WhatsApp API
+ * @param bookingReference
+ * @param {object} operatorConfig - Operator specific whatsapp config
  * @returns {Promise<object>} - Promise that resolves with success/error status
  */
-async function saveWhatsAppConversations(message, cargoBooking, response) {
+async function saveWhatsAppConversations(message, bookingReferenceData, response, bookingReference, operatorConfig = {}) {
     logger.info('Saving WhatsApp conversation', {
         message,
-        bookingId: cargoBooking?.id,
-        hasResponse: !!response
+        bookingId: bookingReferenceData?.id,
+        hasResponse: !!response,
+        bookingReference: bookingReference
     });
+
+    const effectiveConfig = getEffectiveConfig(operatorConfig);
+    const SENDER_PHONE = effectiveConfig.phoneNumber;
 
     try {
         const whatsAppMessage = new WhatsAppMessage.model({
@@ -119,30 +139,46 @@ async function saveWhatsAppConversations(message, cargoBooking, response) {
             incoming: false,
             response: JSON.stringify(response),
             sentAt: new Date(),
-            bookingId: cargoBooking?.id,
-            operatorId: cargoBooking?.operatorId
+            bookingId: bookingReferenceData?.id,
+            operatorId: bookingReferenceData?.operatorId
         });
 
-        const phoneNumber = formatPhoneNumber(cargoBooking.receiverPhone?.toString());
+        const phoneNumber = formatPhoneNumber(bookingReferenceData.receiverPhone?.toString());
 
         const existingConversation = await WhatsAppConversation.findOne({
             phoneNumber,
-            referenceType: WhatsAppConversation.CARGO_BOOKING_TYPE,
-            operatorId: cargoBooking?.operatorId
+            referenceType: bookingReference,
+            operatorId: bookingReferenceData?.operatorId
         });
 
         if (existingConversation) {
             existingConversation.messages.push(whatsAppMessage);
+            if (bookingReferenceData?.pnr) existingConversation.pnrs.push(bookingReferenceData.pnr);
+            if (bookingReferenceData?.fromCity) existingConversation.fromCities.push(bookingReferenceData.fromCity);
+            if (bookingReferenceData?.toCity) existingConversation.toCities.push(bookingReferenceData.toCity);
+            if (bookingReferenceData?.travelDates) existingConversation.travelDates.push(bookingReferenceData.travelDates);
             await existingConversation.save();
         } else {
+            const pnrs = [];
+            const fromCities = [];
+            const toCities = [];
+            const travelDates = [];
+            if (bookingReferenceData?.pnr) pnrs.push(bookingReferenceData.pnr);
+            if (bookingReferenceData?.fromCity) fromCities.push(bookingReferenceData.fromCity);
+            if (bookingReferenceData?.toCity) toCities.push(bookingReferenceData.toCity);
+            if (bookingReferenceData?.travelDates) travelDates.push(bookingReferenceData.travelDates);
             const newConversation = new WhatsAppConversation({
-                name: cargoBooking.receiverName,
+                name: bookingReferenceData.receiverName,
                 messages: [ whatsAppMessage ],
                 phoneNumber,
-                from: config.NETCORE_PHONE_NUMBER,
+                from: SENDER_PHONE,
+                pnrs,
+                fromCities,
+                toCities,
+                travelDates,
                 replyPending: false,
-                operatorId: cargoBooking?.operatorId,
-                referenceType: WhatsAppConversation.CARGO_BOOKING_TYPE
+                operatorId: bookingReferenceData?.operatorId,
+                referenceType: bookingReference
             });
             await newConversation.save();
         }
@@ -155,7 +191,10 @@ async function saveWhatsAppConversations(message, cargoBooking, response) {
     }
 }
 
-async function uploadPDF(bookingId, pdfBuffer) {
+async function uploadPDF(bookingId, pdfBuffer, operatorConfig = {}) {
+    const effectiveConfig = getEffectiveConfig(operatorConfig);
+    const API_KEY = effectiveConfig.apiKey;
+
     try {
         // Create a temporary file
         const tempFilePath = path.join('/tmp', `${bookingId}.pdf`);
@@ -204,8 +243,57 @@ async function uploadPDF(bookingId, pdfBuffer) {
     }
 }
 
+/**
+ * Send WhatsApp text message using NETCORE
+ * @param {string} mobile - Mobile number
+ * @param {string} content - Message content
+ * @param {object} operatorConfig - Operator specific whatsapp config
+ * @returns {Promise<object>} - Response from WhatsApp API
+ */
+async function sendWhatsAppTextMessage(mobile, content, operatorConfig = {}) {
+    logger.info(`Sending WhatsApp text message`, { mobile });
+
+    const effectiveConfig = getEffectiveConfig(operatorConfig);
+    const API_KEY = effectiveConfig.apiKey;
+
+    const payload = {
+        message: [
+            {
+                recipient_whatsapp: formatPhoneNumber(mobile),
+                recipient_type: "individual",
+                message_type: "text",
+                type_text: [
+                    {
+                        content: content
+                    }
+                ]
+            }
+        ]
+    };
+
+    try {
+        const response = await axios.post(CONVO_API_URL, payload, {
+            headers: {
+                'Authorization': `Bearer ${API_KEY}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.status !== 200 || (response.data.status && response.data.status.toLowerCase() !== 'success')) {
+            logger.error(`Failed to send WhatsApp text message: ${JSON.stringify(response.data)}`);
+            return { success: false, error: response.data?.error || response.data };
+        }
+
+        return { success: true, data: response.data };
+    } catch (error) {
+        logger.error(`Failed to send WhatsApp text message: ${error.message}`);
+        return { success: false, error: error.message };
+    }
+}
+
 module.exports = {
     sendWhatsAppTemplateMessage,
     saveWhatsAppConversations,
-    uploadPDF
+    uploadPDF,
+    sendWhatsAppTextMessage
 };

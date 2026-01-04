@@ -115,7 +115,7 @@ class RazorpayService {
 
       const fileName = `qr_codes/${bookingId}_${Date.now()}.png`;
       const params = {
-        Bucket: config.BUCKET_NAME,
+        Bucket: config.RZP_BUCKET_NAME,
         Key: fileName,
         Body: imageResponse.data,
         ContentType: 'image/png',

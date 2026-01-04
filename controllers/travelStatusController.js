@@ -18,11 +18,11 @@ exports.importExcel = async (req, res) => {
 
     /* ================= S3 ================= */
     const s3 = new S3Client({
-      region: process.env.BUCKET_REGION,
-      endpoint: process.env.BUCKET_ENDPOINT,
+      region: process.env.REGION,
+      endpoint: process.env.bucket_endpoint,
       credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_Id,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+        accessKeyId: process.env.ACCESS_KEY_Id,
+        secretAccessKey: process.env.SECRETACCESSKEY
       }
     });
 
@@ -38,7 +38,7 @@ exports.importExcel = async (req, res) => {
       })
     );
 
-    const fileUrl = `${process.env.BUCKET_ENDPOINT}/${process.env.BUCKET_NAME}/${filePath}`;
+    const fileUrl = `${process.env.bucket_endpoint}/${process.env.BUCKET_NAME}/${filePath}`;
 
     /* ================= READ EXCEL ================= */
     const workbook = XLSX.read(req.file.buffer, {
@@ -346,11 +346,11 @@ exports.deleteImport = async (req, res) => {
 
     //  Delete file from bucket
     const s3 = new S3Client({
-      region: process.env.BUCKET_REGION,
-      endpoint: process.env.BUCKET_ENDPOINT,
+      region: process.env.REGION,
+      endpoint: process.env.bucket_endpoint,
       credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_Id,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        accessKeyId: process.env.ACCESS_KEY_Id,
+        secretAccessKey: process.env.SECRETACCESSKEY,
       },
     });
 
