@@ -1,9 +1,9 @@
 {
 	"info": {
-		"_postman_id": "10c3a085-88c2-4164-b12e-5b592404f921",
+		"_postman_id": "325f5a61-0e3b-4c67-84fe-3bb23630c519",
 		"name": "My_Cargo",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "12433927"
+		"_exporter_id": "37314111"
 	},
 	"item": [
 		{
@@ -26,7 +26,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"mobile\": \"9999999990\",\r\n  \"password\": \"123456\"\r\n}\r\n",
+							"raw": "{\r\n  \"mobile\": \"9999999992\",\r\n  \"password\": \"123456\"\r\n}\r\n",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -72,6 +72,103 @@
 								"api",
 								"auth",
 								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "loginWithOTP",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"mobile\": \"9999999992\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/loginWithOTP",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"loginWithOTP"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "verifyOTP",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let response = pm.response.json();",
+									"",
+									"console.log('response', response);",
+									"",
+									"// Extract the token from response.data.token",
+									"let token = response.token;",
+									"",
+									"// Save to a collection variable",
+									"pm.collectionVariables.set(\"token\", token);",
+									"",
+									"// Optional: Debug output",
+									"console.log(\"Token set to collection variable:\", token);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2ODRiYmM0YjhkOWZhMzRhMWM1Yjk1OTQiLCJpYXQiOjE3NDk4MDQ4MjIsImV4cCI6MTc0OTg5MTIyMn0.vg6sb6lva2CUAMT4M3R4kLqS7BPXtXBm97S6h1VDmts"
+							},
+							{
+								"key": "Cookie",
+								"value": "connect.sid=s%3AZfPVff_bdjCuM8u6jjYamQzVjIMEn2AQ.mcHEkJ641Zry0fwPwnDpNGweB3M5Aq9FbMGGWLsr8Qg"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"mobile\": \"9999999992\",\n    \"otp\": 123456\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:4600/api/auth/verifyOTP",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "4600",
+							"path": [
+								"api",
+								"auth",
+								"verifyOTP"
 							]
 						}
 					},
@@ -761,6 +858,36 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Search Users",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"page\": 1,\n    \"limit\": 10,\n    \"operatorId\": \"6889e42ef71628bd9966af84\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:4600/api/users/search",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "4600",
+							"path": [
+								"api",
+								"users",
+								"search"
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
@@ -974,6 +1101,83 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Initiate Booking",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": \"CFB-1754415458392\",\n    \"senderName\": \"Chanakya\",\n    \"senderPhone\": \"9390015863\",\n    \"senderEmail\": \"\",\n    \"senderAddress\": \"\",\n    \"receiverName\": \"Divyesh N\",\n    \"receiverPhone\": \"9966992346\",\n    \"receiverEmail\": \"\",\n    \"receiverAddress\": \"\",\n    \"fromOffice\": \"6889e42ef71628bd9966afc1\",\n    \"toOffice\": \"6889e42ef71628bd9966afc3\",\n    \"dispatchDate\": \"2025-08-05\",\n    \"arrivalDate\": \"2025-08-05\",\n    \"packageDescription\": \"Furniture\",\n    \"valueOfGoods\": \"10000\",\n    \"quantity\": \"2\",\n    \"weight\": \"100\",\n    \"freightCharge\": 20,\n    \"loadingCharge\": 20,\n    \"unloadingCharge\": 0,\n    \"gst\": 1,\n    \"totalAmountCharge\": 41,\n    \"paymentType\": \"\",\n    \"wayBillNo\": \"\",\n    \"getpackage\": \"\",\n    \"createdAt\": \"2025-08-05T17:37:38.392Z\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/bookings/initiateBooking",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"bookings",
+								"initiateBooking"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Confirm Booking",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"lrType\": \"Paid\",\n    \"paymentTypes\": [\n        \"Cash\"\n    ],\n    \"status\": \"Booked\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/bookings/confirmBooking/6892416290b53ea3fb5d0930",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"bookings",
+								"confirmBooking",
+								"6892416290b53ea3fb5d0930"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Generate PDF",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/bookings/6889e43af71628bd9966b192/pdf",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"bookings",
+								"6889e43af71628bd9966b192",
+								"pdf"
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
@@ -1120,7 +1324,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\": \"Whizzarddd\",\n    \"address\": \"Bangalore\",\n    \"phone\": \"0123456789\",\n    \"status\": \"Active\",\n    \"code\": \"WIZZZ\",\n    \"paymentOptions\": [\"Cash\", \"UPI\"] \n}",
+							"raw": "{\n    \"name\": \"Whizzarddd\",\n    \"address\": \"Bangalore\",\n    \"phone\": \"0123456789\",\n    \"status\": \"Active\",\n    \"code\": \"WIZ\",\n    \"paymentOptions\": [\"Cash\", \"UPI\"],\n    \"bookingTemplate\": \"booking-template.html\",\n    \"whatsappConfig\": {\n        \"phoneNumber\": \"whatsapp business number\",\n        \"apiKey\": \"new_api_key_123\",\n        \"feedbackTemplateName\": \"whatsapp feedback template name\"\n    }\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1128,12 +1332,10 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:4600/api/operators/create",
-							"protocol": "http",
+							"raw": "{{base_url}}/api/operators/create",
 							"host": [
-								"localhost"
+								"{{base_url}}"
 							],
-							"port": "4600",
 							"path": [
 								"api",
 								"operators",
@@ -1178,6 +1380,44 @@
 								"api",
 								"operators",
 								"search"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Operator",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"whatsappConfig\": {\r\n        \"phoneNumber\": \"updated whatsapp business number\",\r\n        \"apiKey\": \"updated whatsapp api key\",\r\n        \"feedbackTemplateName\": \"updated whatsapp feedback template name\"\r\n    }\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/operators/695a4665d045604ad3120259",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"operators",
+								"695a4665d045604ad3120259"
 							]
 						}
 					},
@@ -1332,7 +1572,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"fromPlace\": \"Kukatpally\",\n    \"fromState\": 29,\n    \"ewbNo\": 141011741428,\n    \"vehicleNo\": \"AP39KX1234\"\n}",
+							"raw": "{\n    \"fromPlace\": \"Kukatpally\",\n    \"fromState\": 29,\n    \"ewbNo\": 141011767073,\n    \"vehicleNo\": \"AP39KX1241\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1370,7 +1610,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"ewbNo\": 141011741428,\n    \"transporterId\": \"29AAGCB1286Q000\"\n}",
+							"raw": "{\n    \"ewbNo\": 131011767073,\n    \"transporterId\": \"29AAGCB1286Q000\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1390,8 +1630,288 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "verifyWayBillNumber",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/ewaybill/verifyEWayBillNumber?waybillNumber=151011767073",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"ewaybill",
+								"verifyEWayBillNumber"
+							],
+							"query": [
+								{
+									"key": "waybillNumber",
+									"value": "151011767073"
+								}
+							]
+						}
+					},
+					"response": []
 				}
 			]
+		},
+		{
+			"name": "PayU",
+			"item": [
+				{
+					"name": "Generate Dynamic QR",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"amount\": \"10.00\",\n    \"productinfo\": \"Product testing live\",\n    \"firstname\": \"Divyesh\",\n    \"email\": \"divyeshnallapati@gmail.com\",\n    \"phone\": 9966992346\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/payu/process-payment",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"payu",
+								"process-payment"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "RazorPay",
+			"item": [
+				{
+					"name": "Generate QR",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2ODU4ZmIyNjU4YjdlMjU4MGU1NWRjYWQiLCJpYXQiOjE3NTM5MzkxNDcsImV4cCI6MTc1NDAyNTU0N30.TRFa_l6_ITyUxFLbK2so_WnlLxsTLtDHy45NPg3-Prw",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"lrType\": \"Paid\",\n    \"status\": \"Booked\",\n    \"paymentTypes\": [\"UPI\"]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/razorpay/generate-qr/TP-SC4310725-1010",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"razorpay",
+								"generate-qr",
+								"TP-SC4310725-1010"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Razorpay Report",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/razorpay/getRazorpayReport",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"razorpay",
+								"getRazorpayReport"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Whatsapp",
+			"item": [
+				{
+					"name": "sendFeedbackRequests",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"pnrs\": [\n        \"PRAPCEC5057679\"\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/whatsapp/sendFeedbackRequests",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"whatsapp",
+								"sendFeedbackRequests"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "sendOneOnOneMessages",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"mobileNumber\": \"9966992346\",\n    \"content\": \"Hi, this is from one to one message api.\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/whatsapp/sendOneOnOneMessage",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"whatsapp",
+								"sendOneOnOneMessage"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "WhatsApp Report",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/whatsapp/getWhatsAppReport",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"whatsapp",
+								"getWhatsAppReport"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get WhatsApp Report",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/whatsapp/getWhatsAppReport",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"whatsapp",
+								"getWhatsAppReport"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getAllConversations",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/whatsapp/conversations",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"whatsapp",
+								"conversations"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getOneOnOneConversations",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/whatsapp/conversations/919966992346",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"whatsapp",
+								"conversations",
+								"919966992346"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Payment Options",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/operators/payment",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"operators",
+						"payment"
+					]
+				}
+			},
+			"response": []
 		}
 	],
 	"auth": {
@@ -1399,7 +1919,7 @@
 		"bearer": [
 			{
 				"key": "token",
-				"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2ODUwZjE4MGUzMjdlMjE5ZTFlYmMzYWEiLCJpYXQiOjE3NTAxMzcxMjIsImV4cCI6MTc1MDIyMzUyMn0.QRt_FFLsHlg7JiJNf-7kjszJCJkISMOah2fm9up803w",
+				"value": "{{token}}",
 				"type": "string"
 			}
 		]
@@ -1428,14 +1948,14 @@
 	],
 	"variable": [
 		{
-			"key": "token",
-			"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2ODRiYmM0YjhkOWZhMzRhMWM1Yjk1OTQiLCJpYXQiOjE3NDk4MDQ4MjIsImV4cCI6MTc0OTg5MTIyMn0.vg6sb6lva2CUAMT4M3R4kLqS7BPXtXBm97S6h1VDmts",
-			"type": "string"
-		},
-		{
 			"key": "base_url",
 			"value": "http://localhost:4600",
 			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2ODg5ZTQyZWY3MTYyOGJkOTk2NmFmOGYiLCJpYXQiOjE3Njc0NDQ2NDgsImV4cCI6MTc2NzUzMTA0OH0.haMxxNIIarT1eivo5EtyEWUPQNk9FmVvQXNimCjk-YM",
+			"type": "default"
 		}
 	]
 }
