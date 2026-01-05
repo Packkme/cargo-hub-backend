@@ -32,6 +32,13 @@ class OperatorService {
           throw new Error('Operator with this template name already exists');
       }
 
+    if (operatorData.whatsappConfig?.phoneNumber) {
+      const existingPhoneNumber = await Operator.findOne({ 'whatsappConfig.phoneNumber': operatorData.whatsappConfig.phoneNumber });
+      if (existingPhoneNumber) {
+        throw new Error(`WhatsApp phone number ${operatorData.whatsappConfig.phoneNumber} is already in use by another operator`);
+      }
+    }
+
     const operator = new Operator(operatorData);
     await operator.save();
     return operator;
@@ -49,6 +56,15 @@ class OperatorService {
      */
     static async updateOperator(operatorId, updateData) {
         try {
+          if (updateData.whatsappConfig?.phoneNumber) {
+            const existingPhoneNumber = await Operator.findOne({
+              'whatsappConfig.phoneNumber': updateData.whatsappConfig.phoneNumber,
+              _id: { $ne: operatorId }
+            });
+            if (existingPhoneNumber) {
+              throw new Error(`WhatsApp phone number ${updateData.whatsappConfig.phoneNumber} is already in use by another operator`);
+            }
+          }
             const updatedOperator = await Operator.findByIdAndUpdate(
                 operatorId,
                 updateData,
@@ -63,7 +79,7 @@ class OperatorService {
             return updatedOperator;
         } catch (error) {
             logger.error(`Error updating operator: ${error.message}`);
-            throw new Error('Failed to update operator');
+            throw error;
         }
     }
 

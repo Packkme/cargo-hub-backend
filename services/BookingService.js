@@ -300,11 +300,14 @@ class BookingService {
       });
 
       if (config.WHATSAPP_ENABLED === 'true') {
+        const operator = await Operator.findById(booking.operatorId);
+        const operatorConfig = operator?.whatsappConfig || {};
+
         logger.info('Generating LR', { bookingId: savedBooking._id });
 
         const pdfBuffer = await generatePdfBuffer(populatedBooking);
 
-        const uploadResponse = await whatsappService.uploadPDF(booking.bookingId, pdfBuffer);
+        const uploadResponse = await whatsappService.uploadPDF(booking.bookingId, pdfBuffer, operatorConfig);
         if (uploadResponse.success) {
           const mediaId = uploadResponse.mediaId;
           const attributes = [ booking.receiverName, booking.senderName, populatedBooking.fromOffice.name, booking.bookingId, populatedBooking.toOffice.name, populatedBooking.toOffice.phone ];
@@ -321,7 +324,7 @@ class BookingService {
             whatsappMessage
           });
 
-          const whatsappResponse = await whatsappService.sendWhatsAppTemplateMessage(booking.receiverPhone, this.booking_confirmed, attributes, mediaId);
+          const whatsappResponse = await whatsappService.sendWhatsAppTemplateMessage(booking.receiverPhone, this.booking_confirmed, attributes, mediaId, operatorConfig);
           if (whatsappResponse.success) {
             logger.info('WhatsApp message sent successfully', {
               bookingId: booking.bookingId,
@@ -330,7 +333,7 @@ class BookingService {
               status: booking.status,
               whatsappResponse
             });
-            const response = await whatsappService.saveWhatsAppConversations(whatsappMessage, booking, whatsappResponse);
+            const response = await whatsappService.saveWhatsAppConversations(whatsappMessage, booking, whatsappResponse, WhatsAppConversation.CARGO_BOOKING_TYPE, operatorConfig);
             logger.info(response.message);
           }
         }
@@ -414,7 +417,10 @@ class BookingService {
 
         /*Dear {{1}} your package with LR NO: {{2}} has arrived at our office location : {{3}}. You can pick the package at your convenience.*/
 
-        const whatsappResponse = await whatsappService.sendWhatsAppTemplateMessage(booking.receiverPhone, this.booking_arrived, attributes, null);
+        const operator = await Operator.findById(operatorId);
+        const operatorConfig = operator?.whatsappConfig || {};
+
+        const whatsappResponse = await whatsappService.sendWhatsAppTemplateMessage(booking.receiverPhone, this.booking_arrived, attributes, null, operatorConfig);
         if (whatsappResponse.success) {
           logger.info('WhatsApp message sent successfully', {
             bookingId: booking.bookingId,
@@ -423,7 +429,7 @@ class BookingService {
             status: booking.status,
             whatsappResponse
           });
-          const response = await whatsappService.saveWhatsAppConversations(whatsAppMessage, booking, whatsappResponse);
+          const response = await whatsappService.saveWhatsAppConversations(whatsAppMessage, booking, whatsappResponse, WhatsAppConversation.CARGO_BOOKING_TYPE, operatorConfig);
           logger.info(response.message);
         }
       }
@@ -509,6 +515,9 @@ class BookingService {
       });
 
       if (eventType === 'unloaded' && config.WHATSAPP_ENABLED === 'true') {
+        const operator = await Operator.findById(operatorId);
+        const operatorConfig = operator?.whatsappConfig || {};
+
         const promises = bookings.map(booking => {
           const attributes = [booking.receiverName, booking.bookingId, `${booking.toOffice.address} Phone: ${booking.toOffice.phone}`];
 
@@ -516,7 +525,7 @@ class BookingService {
 
           /*Dear {{1}} your package with LR NO: {{2}} has arrived at our office location : {{3}}. You can pick the package at your convenience.*/
 
-          return whatsappService.sendWhatsAppTemplateMessage(booking.receiverPhone, this.booking_arrived, attributes).then(whatsappResponse => {
+          return whatsappService.sendWhatsAppTemplateMessage(booking.receiverPhone, this.booking_arrived, attributes, null, operatorConfig).then(whatsappResponse => {
             if (whatsappResponse.success) {
               logger.info('WhatsApp message sent successfully', {
                 bookingId: booking.bookingId,
@@ -525,7 +534,7 @@ class BookingService {
                 status: booking.status,
                 whatsappResponse
               });
-              return whatsappService.saveWhatsAppConversations(whatsAppMessage, booking, attributes);
+              return whatsappService.saveWhatsAppConversations(whatsAppMessage, booking, attributes, WhatsAppConversation.CARGO_BOOKING_TYPE, operatorConfig);
             }
           });
         });
@@ -583,9 +592,11 @@ class BookingService {
       const baseFilter = {
         operatorId,
         status: { $in: status ? [status] : ["Booked", "InTransit"] },
-        ...(branchIds.length > 0 && { $or: branchIds.map(branchId => ({
-          fromOffice: branchId
-        })) })
+        ...(branchIds.length > 0 && {
+          $or: branchIds.map(branchId => ({
+            fromOffice: branchId
+          }))
+        })
       };
 
       if (query?.trim()) {
@@ -767,11 +778,13 @@ class BookingService {
     try {
       const skip = (page - 1) * limit;
       const baseFilter = {
-        status: { $in: status ? [status] : ['InTransit', 'Booked','Arrived'] },
+        status: { $in: status ? [status] : ['InTransit', 'Booked', 'Arrived'] },
         operatorId,
-        ...(branchIds.length > 0 && { $or: branchIds.map(branchId => ({
-          fromOffice: branchId
-        })) })
+        ...(branchIds.length > 0 && {
+          $or: branchIds.map(branchId => ({
+            fromOffice: branchId
+          }))
+        })
       };
 
       if (query?.trim()) {
@@ -866,9 +879,11 @@ class BookingService {
       const baseFilter = {
         status: { $in: status ? [status] : ['Arrived', 'Booked'] },
         operatorId: opId,
-        ...(branchIds.length > 0 && { $or: branchIds.map(branchId => ({
-          fromOffice: branchId
-        })) })
+        ...(branchIds.length > 0 && {
+          $or: branchIds.map(branchId => ({
+            fromOffice: branchId
+          }))
+        })
       };
 
       if (query?.trim()) {
