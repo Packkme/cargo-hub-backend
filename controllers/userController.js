@@ -154,19 +154,9 @@ exports.getTodayCargoBalance = async (req, res) => {
  * Get users 
  */
 exports.getUserNames = catchAsync(async (req, res) => {
- 
   const userRole = req.user?.role?.rolename;
-  
-  // Allow Super User to search any operator, otherwise restrict to their own operator
-  const isSuperUser = userRole === 'Super User';
   const operatorId = req.user?.operatorId;
-  
-  if (!isSuperUser) {
-    throw new AppError('You can only search users for your own operator', 403, 'FORBIDDEN');
-  }
-
   const users = await UserService.getUserNameByOperator(operatorId, userRole);
-  
   // Map to only return userId and userName
   const mappedUsers = users.map(user => ({
     userId: user._id.toString(),

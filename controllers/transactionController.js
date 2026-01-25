@@ -7,6 +7,7 @@ exports.getUserTransactions = async (req, res) => {
 
     const { transactions, totalCount } = await transactionService.getTransactionsByOperator(
       req.user.operatorId, 
+      req.body.userId,
       parseInt(page),
       parseInt(limit)
     );

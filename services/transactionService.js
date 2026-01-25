@@ -1,8 +1,11 @@
 const Transaction = require('../models/Transaction');
 const mongoose = require('mongoose');
 
-exports.getTransactionsByOperator = async (operatorId, page, limit) => {
+exports.getTransactionsByOperator = async (operatorId, userId, page, limit) => {
   const skip = (page - 1) * limit;
+  
+  // Validate userId if provided - only use if it's a valid non-empty value
+  const hasUserId = userId && userId.toString().trim() !== '' && mongoose.Types.ObjectId.isValid(userId);
 
   const aggregationPipeline = [
     {
@@ -48,6 +51,15 @@ exports.getTransactionsByOperator = async (operatorId, page, limit) => {
         ]
       }
     },
+
+    // Filter by userId if provided
+    ...(hasUserId ? [{
+      $match: {
+        $or: [
+          { user: new mongoose.Types.ObjectId(userId) }
+        ]
+      }
+    }] : []),
 
     // Lookup users
     {
@@ -152,7 +164,7 @@ exports.getTransactionsByOperator = async (operatorId, page, limit) => {
   const results = await Transaction.aggregate(aggregationPipeline);
 
   // Count aggregation (also includes Delivered now)
-  const countAggregation = await Transaction.aggregate([
+  const countAggregationPipeline = [
     {
       $match: {
         type: { $in: ['Booking', 'Transfer', 'Delivered'] }
@@ -190,8 +202,18 @@ exports.getTransactionsByOperator = async (operatorId, page, limit) => {
         ]
       }
     },
+    // Filter by userId if provided
+    ...(hasUserId ? [{
+      $match: {
+        $or: [
+          { user: new mongoose.Types.ObjectId(userId) }
+        ]
+      }
+    }] : []),
     { $count: 'total' }
-  ]);
+  ];
+
+  const countAggregation = await Transaction.aggregate(countAggregationPipeline);
 
   const totalCount = countAggregation[0]?.total || 0;
 

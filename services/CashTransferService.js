@@ -194,13 +194,25 @@ static async getCashTransfers(operatorId, status, { page, limit }, user) {
 
         //  Create a Transaction document
         await Transaction.create({
-            user: toUser._id, 
+            user: fromUser._id, 
             fromUser: fromUser._id,
             toUser: toUser._id,
             amount: transfer.amount,
+            oldBalance: (fromUser.cargoBalance+transfer.amount),
+            balanceAfter: fromUser.cargoBalance,
+            type: 'Transfer',
+            description: `Cash Transfer of ₹${transfer.amount} sent from ${fromUser.fullName} to ${toUser.fullName}`,
+            referenceId: null,
+            cashTransferId: transfer._id, 
+        });
+        //  Create a Transaction document
+        await Transaction.create({
+            user: toUser._id, 
+            oldBalance: (toUser.cargoBalance-transfer.amount),
+            amount: transfer.amount,
             balanceAfter: toUser.cargoBalance,
             type: 'Transfer',
-            description: `Cash Transfer of ₹${transfer.amount} from ${fromUser.fullName} to ${toUser.fullName}`,
+            description: `Cash Transfer of ₹${transfer.amount} recieved from ${fromUser.fullName} to ${toUser.fullName}`,
             referenceId: null,
             cashTransferId: transfer._id, 
         });
