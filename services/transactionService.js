@@ -143,6 +143,7 @@ exports.getTransactionsByOperator = async (operatorId, page, limit) => {
       }
     },
 
+    // Sort by creation date in descending order (newest first)
     { $sort: { createdAt: -1 } },
     { $skip: skip },
     { $limit: limit }

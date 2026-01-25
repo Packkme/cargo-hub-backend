@@ -15,12 +15,6 @@ const createUserSchema = Joi.object({
       'string.empty': 'Mobile number is required'
     }),
   
-  password: Joi.string().min(6).max(128).required()
-    .messages({
-      'string.min': 'Password must be at least 6 characters long',
-      'string.max': 'Password cannot exceed 128 characters',
-      'string.empty': 'Password is required'
-    }),
   
   branchId: objectId.optional()
     .messages({
@@ -93,9 +87,18 @@ const userIdParamSchema = Joi.object({
     })
 });
 
+const operatorIdQuerySchema = Joi.object({
+  operatorId: objectId.required()
+    .messages({
+      'string.pattern.base': 'Invalid operator ID format',
+      'any.required': 'Operator ID is required'
+    })
+});
+
 module.exports = {
   createUserSchema,
   updateUserSchema,
   searchUserSchema,
-  userIdParamSchema
+  userIdParamSchema,
+  operatorIdQuerySchema
 };

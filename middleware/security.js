@@ -4,6 +4,17 @@ const AppError = require('../utils/AppError');
 
 // Rate limiting configuration
 const createRateLimiter = (options = {}) => {
+  // Helper function to check if request is from localhost
+  const isLocalhostRequest = (req) => {
+    const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
+    return ip === '127.0.0.1' || 
+           ip === '::1' || 
+           ip === '::ffff:127.0.0.1' ||
+           ip?.startsWith('127.') ||
+           req.hostname === 'localhost' ||
+           req.hostname === '127.0.0.1';
+  };
+
   const defaultOptions = {
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 60 * 1000, // 1 minute
     max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 500,
@@ -23,6 +34,18 @@ const createRateLimiter = (options = {}) => {
         429,
         'RATE_LIMIT_EXCEEDED'
       );
+    },
+    // Skip rate limiting for localhost (merge with any existing skip function)
+    skip: (req) => {
+      // Always skip for localhost
+      if (isLocalhostRequest(req)) {
+        return true;
+      }
+      // If options has a custom skip function, also check that
+      if (options.skip && typeof options.skip === 'function') {
+        return options.skip(req);
+      }
+      return false;
     }
   };
 

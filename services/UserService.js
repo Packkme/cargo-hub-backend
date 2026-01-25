@@ -12,7 +12,7 @@ class UserService {
    * @param {string} userRole - Current user's role name
    * @returns {Promise<Array>} List of users
    */
-  static async getUsers(operatorId, userRole) {
+  static async getUserNameByOperator(operatorId, userRole) {
     logger.info('Fetching users', { operatorId, userRole });
     
     const isSuperUser = userRole === 'Super User';
@@ -25,7 +25,7 @@ class UserService {
     try {
       // For Super User, fetch all users; otherwise filter by operatorId
       const query = isSuperUser ? {} : { operatorId };
-      const users = await User.find(query);
+      const users = await User.find(query).select('fullName');
       logger.info('Successfully fetched users', { count: users.length, operatorId, isSuperUser });
       return users;
     } catch (error) {
@@ -81,7 +81,7 @@ class UserService {
    * @returns {Promise<Object>} Created user
    */
   static async createUser(userData, currentOperatorId, createdBy) {
-    const { mobile, password, role, branchId } = userData;
+    const { mobile, role, branchId } = userData;
     logger.info('Creating new user', {
       mobile,
       role,
@@ -123,13 +123,10 @@ class UserService {
       const status = userData.status?.charAt(0).toUpperCase() +
                     (userData.status?.slice(1).toLowerCase() || '');
 
-      // Hash password
-      const hashedPassword = await bcrypt.hash(password, 10);
-
+  
       // Create user
       const newUser = new User({
         ...userData,
-        password: hashedPassword,
         status: status || 'Active',
         operatorId: operatorIdToUse,
         createdBy: createdBy || null,

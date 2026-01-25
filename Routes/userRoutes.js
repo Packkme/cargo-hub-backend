@@ -14,6 +14,8 @@ router.use(passport.authenticate('jwt', { session: false }));
 
 // CRUD routes
 router.get('/', userController.getUsers);
+// Specific routes must come before parameterized routes
+router.get('/getUserNames', userController.getUserNames);
 router.get('/:id', validate(userIdParamSchema, 'params'), userController.getUserById);
 router.post('/search', validate(searchUserSchema), userController.searchUsers);
 router.post('/', validate(createUserSchema), userController.createUser);

@@ -4,7 +4,6 @@ const userSchema = new mongoose.Schema({
   //orgId
   fullName: { type: String, required: true },
   mobile: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
   token: { type: String },
   branchId: { type: mongoose.Schema.Types.ObjectId, ref: 'Branch' },
   cargoBalance: { type: Number, default: 0 },
