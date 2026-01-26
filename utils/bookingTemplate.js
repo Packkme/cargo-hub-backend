@@ -28,18 +28,17 @@ module.exports = async function generatePdfBuffer(booking) {
   logger.info('Generating PDF for booking', booking );
 
     const operator = await Operator.findById(booking.operatorId).select('bookingTemplate').lean();
-    const templateName = operator?.bookingTemplate;
-
+    let templateName = operator?.bookingTemplate;
+    if (!templateName) {
+      templateName = 'booking-confirmation-template.html';
+    }
     // 1. Get the template path using the operator's ID
     const templatePath = path.join(__dirname, '..', 'templates', templateName);
 
     // 2. Read the template file
     const templateContent = await fs.readFile(templatePath, 'utf8');
-
-    // 3. Compile the template with the booking data
     const compiledTemplate = Handlebars.compile(templateContent);
     const html = compiledTemplate(booking);
-
   const browser = await puppeteer.launch({
       headless: 'new',
       args: ['--no-sandbox', '--disable-setuid-sandbox'] // Added for better compatibility
