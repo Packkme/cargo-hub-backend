@@ -263,30 +263,64 @@ exports.sendOneOnOneMessage = async (req, res) => {
 };
 
 exports.getAllConversations = async (req, res) => {
-    try {
-        const operatorId = requestContext.getOperatorId();
+  try {
+    const operatorId = requestContext.getOperatorId();
 
-        if (!operatorId) {
-            return res.status(400).json({ error: 'Operator ID is required' });
-        }
-
-        const conversations = await WhatsAppConversation.find({ operatorId, referenceType: WhatsAppConversation.BOOKING_FEEDBACK })
-            .sort({ updatedAt: -1 })
-            .lean();
-
-        const formattedConversations = conversations.map(convo => ({
-            ...convo,
-            messages: convo.messages.map(msg => ({
-                ...msg,
-                sentAt: msg.sentAt ? moment(msg.sentAt).utcOffset('+05:30').format('YYYY-MM-DD HH:mm A') : msg.sentAt
-            }))
-        }));
-
-        return res.status(200).json(formattedConversations);
-    } catch (error) {
-        logger.error('Error getting all conversations:', error);
-        return res.status(500).json({ error: error.message });
+    if (!operatorId) {
+      return res.status(400).json({ error: 'Operator ID is required' });
     }
+
+    const {
+      search,       
+      isComplaint,   
+      fromCity,     
+      toCity        
+    } = req.body;
+
+    const filter = {
+      operatorId,
+      referenceType: WhatsAppConversation.BOOKING_FEEDBACK
+    };
+
+    if (search) {
+      filter.phoneNumber = { $regex: search, $options: 'i' };
+    }
+
+    if (typeof isComplaint === 'boolean') {
+      filter.complaint = isComplaint;
+    }
+
+    if (fromCity && fromCity !== 'all') {
+      filter.fromCities = fromCity;
+    }
+
+    if (toCity && toCity !== 'all') {
+      filter.toCities = toCity;
+    }
+
+    const conversations = await WhatsAppConversation
+      .find(filter)
+      .sort({ updatedAt: -1 })
+      .lean();
+
+    const formattedConversations = conversations.map(convo => ({
+      ...convo,
+      messages: convo.messages.map(msg => ({
+        ...msg,
+        sentAt: msg.sentAt
+          ? moment(msg.sentAt)
+              .utcOffset('+05:30')
+              .format('YYYY-MM-DD HH:mm A')
+          : msg.sentAt
+      }))
+    }));
+
+    return res.status(200).json(formattedConversations);
+
+  } catch (error) {
+    logger.error('Error getting all conversations:', error);
+    return res.status(500).json({ error: error.message });
+  }
 };
 
 exports.getOneOnOneConversations = async (req, res) => {

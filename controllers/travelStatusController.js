@@ -17,6 +17,9 @@ exports.importExcel = async (req, res) => {
     }
 
     /* ================= S3 ================= */
+
+
+
     const s3 = new S3Client({
       region: process.env.REGION,
       endpoint: process.env.bucket_endpoint,
@@ -267,6 +270,7 @@ exports.getAll = async (req, res) => {
             $push: {
               pnr: "$pnr",
               passengerName: "$passengerName",
+              passengerContact: "$passengerContact", 
               seatNo: "$seatName",
               status: "$status",
               boardingPoint: "$boardingPoint",
