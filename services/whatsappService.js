@@ -235,7 +235,10 @@ async function uploadPDF(bookingId, pdfBuffer, operatorConfig = {}) {
             mediaId: response.data.data.mediaId 
         };
     } catch (error) {
-        logger.error("Media Upload failed:", error);
+        logger.error("Media Upload failed:", {
+            message: error.message,
+            response: error.response?.data
+        });
         return { 
             success: false, 
             error: error.response?.data?.message || error.message 

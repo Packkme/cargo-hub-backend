@@ -10,6 +10,7 @@ const Transaction = require('../models/Transaction');
 const UserService = require('./UserService');
 const whatsappService = require('../services/whatsappService');
 const generatePdfBuffer = require('../utils/bookingTemplate');
+const WhatsAppConversation = require('../models/WhatsAppConversation');
 
 const config = process.env;
 
