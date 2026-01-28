@@ -1,5 +1,6 @@
 const axios = require('axios');
-const AWS_S3 = require('../config/aws');
+const { PutObjectCommand } = require('@aws-sdk/client-s3');
+const s3Client = require('../config/aws');
 const logger = require('../utils/logger');
 const Booking = require('../models/Booking');
 const config = process.env;
@@ -122,14 +123,15 @@ class RazorpayService {
         ACL: 'public-read'
       };
 
-      const s3Result = await AWS_S3.upload(params).promise();
+      await s3Client.send(new PutObjectCommand(params));
+      const location = `${config.bucket_endpoint}/${params.Bucket}/${params.Key}`;
 
-      logger.info('QR code uploaded to S3', { s3Result });
+      logger.info('QR code uploaded to S3', { location });
 
       return {
         qr_code_id: qrData.id,
         qr_image_url: qrData.image_url,
-        qr_image_location: s3Result.Location
+        qr_image_location: location
       };
     } catch (error) {
       logger.error('Error in generateQR', error );

@@ -19,7 +19,11 @@ exports.getTodayBookingsByPayment = async () => {
             {
                 $group: {
                     _id: '$lrType',
-                    count: { $sum: 1 }
+                    totalAmount: {
+                        $sum: {
+                            $ifNull: ['$totalAmountCharge', 0]
+                        }
+                    }
                 }
             }
         ]);
@@ -33,7 +37,7 @@ exports.getTodayBookingsByPayment = async () => {
             const label = item._id === 'ToPay' ? 'To Pay' : 'Paid';
             const existingItem = pieChartData.find(p => p.label === label);
             if (existingItem) {
-                existingItem.value = item.count;
+                existingItem.value = item.totalAmount;
             }
         });
 

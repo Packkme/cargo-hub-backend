@@ -1,9 +1,12 @@
+const skipMongo = process.env.JEST_SKIP_MONGO === 'true';
+const skipCoverage = skipMongo || process.env.JEST_SKIP_COVERAGE === 'true';
+
 module.exports = {
-  testEnvironment: 'node',
+  testEnvironment: '<rootDir>/tests/CustomNodeEnvironment.js',
   testMatch: ['**/tests/**/*.test.js'],
   clearMocks: true,
   verbose: true,
-  collectCoverage: true,
+  collectCoverage: !skipCoverage,
   detectOpenHandles: true,
   forceExit: true,
   coverageDirectory: 'coverage',
@@ -18,7 +21,7 @@ module.exports = {
     '!**/testHelpers.js'
   ],
   setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
-  coverageThreshold: {
+  coverageThreshold: skipCoverage ? undefined : {
     global: {
       branches: 60,
       functions: 60,

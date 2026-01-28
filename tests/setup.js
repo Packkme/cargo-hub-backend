@@ -1,35 +1,39 @@
-const { MongoMemoryServer } = require('mongodb-memory-server');
 const mongoose = require('mongoose');
 
 let mongod;
+const shouldInitMongo = process.env.JEST_SKIP_MONGO !== 'true';
 
-// Setup test database
-beforeAll(async () => {
-  mongod = await MongoMemoryServer.create();
-  const uri = mongod.getUri();
-  
-  await mongoose.connect(uri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
+if (shouldInitMongo) {
+  const { MongoMemoryServer } = require('mongodb-memory-server');
+  beforeAll(async () => {
+    mongod = await MongoMemoryServer.create();
+    const uri = mongod.getUri();
+    
+    await mongoose.connect(uri, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
   });
-});
 
-// Clean up after each test
-afterEach(async () => {
-  const collections = mongoose.connection.collections;
-  
-  for (const key in collections) {
-    const collection = collections[key];
-    await collection.deleteMany({});
-  }
-});
+  afterEach(async () => {
+    const collections = mongoose.connection.collections;
+    
+    for (const key in collections) {
+      const collection = collections[key];
+      await collection.deleteMany({});
+    }
+  });
 
-// Close connection after all tests
-afterAll(async () => {
-  await mongoose.connection.dropDatabase();
-  await mongoose.connection.close();
-  await mongod.stop();
-});
+  afterAll(async () => {
+    await mongoose.connection.dropDatabase();
+    await mongoose.connection.close();
+    await mongod.stop();
+  });
+} else {
+  beforeAll(() => {
+    // MongoDB in-memory server skipped for lightweight unit tests
+  });
+}
 
 // Helper function to create test operator
 const createTestOperator = async () => {
