@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const applyOperatorScope = require('../utils/mongooseOperatorScope');
 
 const branchSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -10,5 +11,7 @@ const branchSchema = new mongoose.Schema({
   operatorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Operator'},
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 });
+
+branchSchema.plugin(applyOperatorScope);
 
 module.exports = mongoose.model('Branch', branchSchema);

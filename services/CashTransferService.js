@@ -4,6 +4,7 @@ const User = require('../models/User');
 const logger = require('../utils/logger');
 const Transaction = require('../models/Transaction');
 const { Parser } = require('json2csv');
+const { appendOperatorFilter } = require('../utils/operatorFilter');
 
 class CashTransferService {
     static async createCashTransfer(data, operatorId, user) {
@@ -26,13 +27,12 @@ class CashTransferService {
     }
 
 static async getCashTransfers(operatorId, status, { page, limit }, user) {
-    const query = {
-        operatorId,
+    const query = appendOperatorFilter({
         $or: [
             { fromUser: user._id },
             { toUser: user._id }
         ]
-    };
+    }, operatorId);
 
     // Handle custom status filtering
     if (status) {
@@ -79,7 +79,7 @@ static async getCashTransfers(operatorId, status, { page, limit }, user) {
 
 
     static async getCashTransfersByStatus(operatorId, status, { page, limit }) {
-        const query = { operatorId };
+        const query = appendOperatorFilter({}, operatorId);
 
         if (status === 'Pending') {
         query.status = 'Pending';
@@ -239,7 +239,9 @@ static async getCashTransfers(operatorId, status, { page, limit }, user) {
 
     static async exportPendingTransfersCSV(operatorId) {
         try {
-        const transfers = await CashTransfer.find({ operatorId, status: 'Pending' })
+        const transfers = await CashTransfer.find(
+            appendOperatorFilter({ status: 'Pending' }, operatorId)
+        )
             .sort({ createdAt: -1 })
             .populate('fromUser', 'fullName')
             .populate('toUser', 'fullName');

@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const applyOperatorScope = require('../utils/mongooseOperatorScope');
 
 
 const permissionSchema = new mongoose.Schema({
@@ -7,5 +8,7 @@ const permissionSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
   operatorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Operator'}
 });
+
+permissionSchema.plugin(applyOperatorScope);
 
 module.exports = mongoose.model('Permission', permissionSchema);

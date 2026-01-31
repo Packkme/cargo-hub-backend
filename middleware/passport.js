@@ -41,7 +41,9 @@ const localLogin = new LocalStrategy(
 
         // Set operatorId in request context
         const context = requestContext.get();
-        context.operatorId = user.operatorId;
+        const roleName = user?.role?.rolename;
+        context.roleName = roleName;
+        context.operatorId = roleName === 'SuperUser' ? null : user.operatorId;
         requestContext.instance.storage.run(context, () => {
           return done(null, user);
         });
@@ -73,7 +75,9 @@ const jwtLogin = new JwtStrategy(
 
         // Set operatorId in request context
         const context = requestContext.get();
-        context.operatorId = user.operatorId;
+        const roleName = user?.role?.rolename;
+        context.roleName = roleName;
+        context.operatorId = roleName === 'SuperUser' ? null : user.operatorId;
         requestContext.instance.storage.run(context, () => {
           return done(null, user);
         });

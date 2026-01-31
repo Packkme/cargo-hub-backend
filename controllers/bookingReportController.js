@@ -17,7 +17,7 @@ exports.getBookingReport = async (req, res) => {
   const operatorId = requestContext.getOperatorId();
   const userId = req.user?._id;
 
-  if (!date || !operatorId) return res.status(400).json({ error: 'Date and operatorId are required' });
+  if (!date || (!operatorId && !requestContext.isSuperUser())) return res.status(400).json({ error: 'Date and operatorId are required' });
 
   try {
     const filter = { bookingDate: date.trim(), operatorId, status: { $in: ['Booked', 'InTransit', 'Arrived', 'Delivered'] } };
@@ -99,7 +99,7 @@ exports.getDelivaryReport = async (req, res) => {
   const operatorId = requestContext.getOperatorId();
   const userId = req.user?._id;
 
-  if (!date || !operatorId) return res.status(400).json({ error: 'Date and operatorId are required' });
+  if (!date || (!operatorId && !requestContext.isSuperUser())) return res.status(400).json({ error: 'Date and operatorId are required' });
 
   try {
     const filter = { arrivalDate: date, operatorId, status: 'Delivered' };
@@ -191,7 +191,7 @@ exports.getStatusReport = async (req, res) => {
   const operatorId = requestContext.getOperatorId();
   const userId = req.user?._id;
 
-  if (!date || !operatorId) return res.status(400).json({ error: 'Date and operatorId are required' });
+  if (!date || (!operatorId && !requestContext.isSuperUser())) return res.status(400).json({ error: 'Date and operatorId are required' });
 
   try {
     const filter = { bookingDate: date, operatorId, status: { $nin: ['Cancelled', 'Pending'] } };
@@ -280,7 +280,7 @@ exports.getLoadingReport = async (req, res) => {
   const operatorId = requestContext.getOperatorId();
   const userId = req.user?._id;
 
-  if (!date || !operatorId) {
+  if (!date || (!operatorId && !requestContext.isSuperUser())) {
     return res.status(400).json({ error: 'Date and operatorId are required' });
   }
 
@@ -366,7 +366,7 @@ exports.getUnloadingReport = async (req, res) => {
   const operatorId = requestContext.getOperatorId();
   const userId = req.user?._id;
 
-  if (!date || !operatorId) {
+  if (!date || (!operatorId && !requestContext.isSuperUser())) {
     return res.status(400).json({ error: 'Date and operatorId are required' });
   }
 
@@ -455,7 +455,7 @@ exports.getIGCLreport = async (req, res) => {
   const operatorId = requestContext.getOperatorId();
   const userId = req.user?._id;
 
-  if (!date || !operatorId) {
+  if (!date || (!operatorId && !requestContext.isSuperUser())) {
     return res.status(400).json({ error: 'Date and operatorId are required' });
   }
 
@@ -563,7 +563,7 @@ exports.getOGCLreport = async (req, res) => {
   const operatorId = requestContext.getOperatorId();
   const userId = req.user?._id;
 
-  if (!date || !operatorId) {
+  if (!date || (!operatorId && !requestContext.isSuperUser())) {
     return res.status(400).json({ error: 'Date and operatorId are required' });
   }
 
@@ -1007,7 +1007,7 @@ exports.exportLoadingReportExcel = async (req, res) => {
   const operatorId = requestContext.getOperatorId();
   const userId = req.user?._id;
 
-  if (!date || !operatorId) {
+  if (!date || (!operatorId && !requestContext.isSuperUser())) {
     return res.status(400).json({ error: 'Date and operatorId are required' });
   }
 
@@ -1113,7 +1113,7 @@ exports.exportUnloadingReportExcel = async (req, res) => {
   const operatorId = requestContext.getOperatorId();
   const userId = req.user?._id;
 
-  if (!date || !operatorId) {
+  if (!date || (!operatorId && !requestContext.isSuperUser())) {
     return res.status(400).json({ error: 'Date and operatorId are required' });
   }
 

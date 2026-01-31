@@ -3,6 +3,8 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const logger = require('../utils/logger');
 const Operator = require('../models/Operator');
+const Role = require('../models/Role');
+const Branch = require('../models/Branch');
 const smsService = require('../services/SMSService');
 const config = process.env;
 const axios = require('axios');
@@ -183,7 +185,7 @@ exports.verifyOTP = async (req, res) => {
     if (!user) {
       return res.status(400).json({ message: 'User not found' });
     }
-
+    
     let paymentOptions = [];
     if (user.operatorId) {
       const operator = await Operator.findById(user.operatorId);
@@ -191,15 +193,34 @@ exports.verifyOTP = async (req, res) => {
     }
     
     const token = await generateToken(user);
+    let roleName = user.role?.rolename || null;
+    if (!roleName && user.role) {
+      const roleDoc = await Role.findById(user.role).select('rolename');
+      roleName = roleDoc?.rolename || null;
+    }
+
+    let branch = null;
+    if (user.branchId) {
+      if (typeof user.branchId === 'object' && user.branchId._id) {
+        branch = { id: user.branchId._id, name: user.branchId.name };
+      } else {
+        const branchDoc = await Branch.findById(user.branchId).select('name');
+        if (branchDoc) {
+          branch = { id: branchDoc._id, name: branchDoc.name };
+        }
+      }
+    }
 
     res.status(200).json({
       mobile: user.mobile,
       id: user._id,
       fullName: user.fullName,
       token: token,
-      role: user.role?.rolename || null,
+      role: roleName,
+      roleId: user.role?._id || user.role || null,
       operatorId: user.operatorId,
-      branch: user.branchId ? { id: user.branchId._id, name: user.branchId.name } : null,
+      branchId: user.branchId?._id || user.branchId || null,
+      branch,
       paymentOptions,
       message: "LOGGED_IN_SUCCESSFULLY"
     });

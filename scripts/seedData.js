@@ -138,7 +138,7 @@ const seedData = async () => {
     const allRoles = [];
     const roleTemplates = [
       {
-        rolename: 'Super User',
+        rolename: 'SuperUser',
         description: 'System administrator with full access',
         permissions: createdPermissions.map(p => p._id)
       },
@@ -175,10 +175,10 @@ const seedData = async () => {
 
     let superUserRole;
 
-    // Create Super User account
+    // Create SuperUser account
     // Create user with mobile 9999999991 before other users
     const superUser = await User.create({
-      fullName: 'Super User',
+      fullName: 'SuperUser',
       email: 'admin@mycargo.com',
       mobile: '9999999991',
       password: await hashPassword('123456'),
@@ -188,11 +188,11 @@ const seedData = async () => {
       status: 'Active',
       createdBy: null
     });
-    console.log('Created Super User account');
+    console.log('Created SuperUser account');
 
-    // Create Super User role
+    // Create SuperUser role
     superUserRole = await Role.create({
-      rolename: 'Super User',
+      rolename: 'SuperUser',
       description: 'System administrator with full access',
       permissions: createdPermissions.map(p => p._id),
       operatorId: operators[0]._id,
@@ -201,11 +201,11 @@ const seedData = async () => {
     allRoles.push(superUserRole);
     // Update the super user's role
     await User.findByIdAndUpdate(superUser._id, { role: superUserRole._id });
-    console.log('Assigned Super User role to user with mobile 9999999991');
+    console.log('Assigned SuperUser role to user with mobile 9999999991');
 
     // Create other roles for all operators
     for (const operator of operators) {
-      for (const template of roleTemplates.filter(t => t.rolename !== 'Super User')) {
+      for (const template of roleTemplates.filter(t => t.rolename !== 'SuperUser')) {
         const role = await Role.create({
           rolename: template.rolename,
           description: template.description,
@@ -250,7 +250,7 @@ const seedData = async () => {
 
     // Update the super user's branch
     await User.findByIdAndUpdate(superUser._id, { branchId: allBranches[0]._id });
-    console.log('Assigned branch to Super User');
+    console.log('Assigned branch to SuperUser');
 
     // 5. Create Users for each branch
     const allUsers = [];

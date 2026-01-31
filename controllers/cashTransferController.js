@@ -93,7 +93,7 @@ exports.exportPendingTransfers = async (req, res) => {
     const operatorId = requestContext.getOperatorId();
     console.log('Operator ID:', operatorId);
 
-    if (!operatorId) {
+    if (!operatorId && !requestContext.isSuperUser()) {
       return res.status(400).json({ message: 'Operator ID not found or invalid' });
     }
 

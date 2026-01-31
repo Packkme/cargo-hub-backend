@@ -1,12 +1,13 @@
 // controllers/transactionController.js
 const transactionService = require('../services/transactionService');
+const requestContext = require('../utils/requestContext');
 
 exports.getUserTransactions = async (req, res) => {
   try {
     const { page = 1, limit = 10 } = req.body;
 
     const { transactions, totalCount } = await transactionService.getTransactionsByOperator(
-      req.user.operatorId, 
+      requestContext.getOperatorId(),
       req.body.userId,
       parseInt(page),
       parseInt(limit)

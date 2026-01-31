@@ -10,7 +10,7 @@ const generatePdfBuffer = require('../utils/bookingTemplate');
 exports.initiateBooking = async (req, res) => {
   try {
     const operatorId = requestContext.getOperatorId();
-    if (!operatorId) {
+    if (!operatorId && !requestContext.isSuperUser()) {
       return res.status(400).json({ error: 'Operator ID is required' });
     }
     const booking = await BookingService.initiateBooking(req.body, req.user._id, operatorId);
@@ -24,7 +24,7 @@ exports.initiateBooking = async (req, res) => {
 exports.collectPayment = async (req, res) => {
   try {
     const operatorId = requestContext.getOperatorId();
-    if (!operatorId) {
+    if (!operatorId && !requestContext.isSuperUser()) {
       return res.status(400).json({ error: 'Operator ID is required' });
     }
 
@@ -53,7 +53,7 @@ exports.collectPayment = async (req, res) => {
 exports.getAllBookings = async (req, res) => {
   try {
     const operatorId = requestContext.getOperatorId();
-    if (!operatorId) {
+    if (!operatorId && !requestContext.isSuperUser()) {
       return res.status(400).json({ error: 'Operator ID is required' });
     }
 
@@ -69,7 +69,7 @@ exports.getAllBookings = async (req, res) => {
 exports.getBookingById = async (req, res) => {
   try {
     const operatorId = requestContext.getOperatorId();
-    if (!operatorId) {
+    if (!operatorId && !requestContext.isSuperUser()) {
       return res.status(400).json({ error: 'Operator ID is required' });
     }
     const booking = await BookingService.getBookingById(req.params.id, operatorId);
@@ -91,7 +91,7 @@ exports.updateBooking = async (req, res) => {
   try {
     const operatorId = requestContext.getOperatorId();
     const userId = req.user._id;
-    if (!operatorId) {
+    if (!operatorId && !requestContext.isSuperUser()) {
       return res.status(400).json({ error: 'Operator ID is required' });
     }
     const booking = await BookingService.updateBooking(
@@ -115,7 +115,7 @@ exports.multipleBookingsChange = async (req, res) => {
   try {
     const operatorId = requestContext.getOperatorId();
     const userId = req.user._id;
-    if (!operatorId) {
+    if (!operatorId && !requestContext.isSuperUser()) {
       return res.status(400).json({ error: 'Operator ID is required' });
     }
 
@@ -135,7 +135,7 @@ exports.multipleBookingsChange = async (req, res) => {
 exports.deleteBooking = async (req, res) => {
   try {
     const operatorId = requestContext.getOperatorId();
-    if (!operatorId) {
+    if (!operatorId && !requestContext.isSuperUser()) {
       return res.status(400).json({ error: 'Operator ID is required' });
     }
     const result = await BookingService.deleteBooking(req.params.id, operatorId );
@@ -153,7 +153,7 @@ exports.deleteBooking = async (req, res) => {
 exports.getUnassignedBookings = async (req, res) => {
   try {
     const operatorId = requestContext.getOperatorId();
-    if (!operatorId) {
+    if (!operatorId && !requestContext.isSuperUser()) {
       return res.status(400).json({ error: 'Operator ID is required' });
     }
 
@@ -174,7 +174,7 @@ exports.getAssignedBookings = async (req, res) => {
   try {
     const operatorId = requestContext.getOperatorId();
 
-    if (!operatorId) {
+    if (!operatorId && !requestContext.isSuperUser()) {
       return res.status(400).json({ error: 'Operator ID is required' });
     }
 
@@ -193,7 +193,7 @@ exports.getInTransitBookings = async (req, res) => {
   try {
     const operatorId = requestContext.getOperatorId();
     const userId = req.user._id;
-    if (!operatorId) {
+    if (!operatorId && !requestContext.isSuperUser()) {
       return res.status(400).json({ error: 'Operator ID is required' });
     }
 
@@ -213,7 +213,7 @@ exports.getArrivedBookings = async (req, res) => {
     const operatorId = requestContext.getOperatorId();
     const userId = req.user._id;
 
-    if (!operatorId) {
+    if (!operatorId && !requestContext.isSuperUser()) {
       return res.status(400).json({ error: 'Operator ID is required' });
     }
 
@@ -239,7 +239,7 @@ exports.searchBookings = async (req, res) => {
     const { limit = 10, page = 1, query = "", status = "" } = req.body;
     const operatorId = req.user?.operatorId;
 
-    if (!operatorId) {
+    if (!operatorId && !requestContext.isSuperUser()) {
       return res.status(400).json({ message: "Operator ID missing" });
     }
 
@@ -261,7 +261,7 @@ exports.searchBookings = async (req, res) => {
 exports.exportBookings = async (req, res) => {
   try {
     const operatorId = requestContext.getOperatorId();
-    if (!operatorId) {
+    if (!operatorId && !requestContext.isSuperUser()) {
       return res.status(400).json({ error: 'Operator ID is required' });
     }
 
@@ -279,7 +279,7 @@ exports.exportBookings = async (req, res) => {
 exports.exportUnassignedBookings = async (req, res) => {
   try {
     const operatorId = requestContext.getOperatorId();
-    if (!operatorId) {
+    if (!operatorId && !requestContext.isSuperUser()) {
       return res.status(400).json({ error: 'Operator ID is required' });
     }
 
@@ -306,7 +306,7 @@ exports.exportUnassignedBookings = async (req, res) => {
 exports.exportArrivedBookings = async (req, res) => {
   try {
     const operatorId = requestContext.getOperatorId();
-    if (!operatorId) {
+    if (!operatorId && !requestContext.isSuperUser()) {
       return res.status(400).json({ error: 'Operator ID is required' });
     }
 
@@ -333,7 +333,7 @@ exports.exportArrivedBookings = async (req, res) => {
 exports.exportInTransitBookings = async (req, res) => {
   try {
     const operatorId = requestContext.getOperatorId();
-    if (!operatorId) {
+    if (!operatorId && !requestContext.isSuperUser()) {
       return res.status(400).json({ error: 'Operator ID is required' });
     }
 
@@ -363,7 +363,7 @@ exports.markAsDelivered = async (req, res) => {
     const userId = req.user._id;
     const bookingId = req.params.bookingId;
 
-    if (!operatorId) {
+    if (!operatorId && !requestContext.isSuperUser()) {
       return res.status(400).json({ error: 'Operator ID is required' });
     }
 
@@ -385,7 +385,7 @@ exports.markAsDelivered = async (req, res) => {
 exports.getContactByPhone = async (req, res) => {
   try {
     const operatorId = requestContext.getOperatorId();
-    if (!operatorId) {
+    if (!operatorId && !requestContext.isSuperUser()) {
       return res.status(400).json({ error: 'Operator ID is required' });
     }
     

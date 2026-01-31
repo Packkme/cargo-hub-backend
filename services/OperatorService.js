@@ -6,6 +6,22 @@ class OperatorService {
     if (operatorData.code) {
       operatorData.code = operatorData.code.toUpperCase();
     }
+    if (operatorData.loadingChargePerUnit !== undefined) {
+      const parsed = Number(operatorData.loadingChargePerUnit);
+      if (Number.isFinite(parsed)) {
+        operatorData.loadingChargePerUnit = parsed;
+      } else {
+        delete operatorData.loadingChargePerUnit;
+      }
+    }
+    if (operatorData.gstRate !== undefined) {
+      const parsed = Number(operatorData.gstRate);
+      if (Number.isFinite(parsed)) {
+        operatorData.gstRate = parsed;
+      } else {
+        delete operatorData.gstRate;
+      }
+    }
 
     if (!/^[A-Z0-9]{3}$/.test(operatorData.code)) {
       throw new Error('Code must be exactly 3 characters, containing only uppercase letters and numbers.');
@@ -56,6 +72,23 @@ class OperatorService {
      */
     static async updateOperator(operatorId, updateData) {
         try {
+          if (updateData.loadingChargePerUnit !== undefined) {
+            const parsed = Number(updateData.loadingChargePerUnit);
+            if (Number.isFinite(parsed)) {
+              updateData.loadingChargePerUnit = parsed;
+            } else {
+              delete updateData.loadingChargePerUnit;
+            }
+          }
+          if (updateData.gstRate !== undefined) {
+            const parsed = Number(updateData.gstRate);
+            if (Number.isFinite(parsed)) {
+              updateData.gstRate = parsed;
+            } else {
+              delete updateData.gstRate;
+            }
+          }
+          updateData.updatedAt = new Date();
           if (updateData.whatsappConfig?.phoneNumber) {
             const existingPhoneNumber = await Operator.findOne({
               'whatsappConfig.phoneNumber': updateData.whatsappConfig.phoneNumber,
@@ -67,8 +100,8 @@ class OperatorService {
           }
             const updatedOperator = await Operator.findByIdAndUpdate(
                 operatorId,
-                updateData,
-                { new: true, runValidators: true }
+                { $set: updateData },
+                { new: true, runValidators: true, context: 'query' }
             );
 
             if (!updatedOperator) {
@@ -137,7 +170,11 @@ static async deleteOperator(operatorId) {
         return null;
       }
 
-      return operator.paymentOptions || [];
+      return {
+        paymentOptions: operator.paymentOptions || [],
+        loadingChargePerUnit: operator.loadingChargePerUnit,
+        gstRate: operator.gstRate,
+      };
     } catch (error) {
       logger.error('Failed to fetch payment options', {
         error: error.message,

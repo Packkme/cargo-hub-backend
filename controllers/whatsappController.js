@@ -16,7 +16,7 @@ exports.getWhatsAppReport = async (req, res) => {
     try {
         const operatorId = requestContext.getOperatorId();
         console.log(operatorId);
-        if (!operatorId) {
+        if (!operatorId && !requestContext.isSuperUser()) {
             return res.status(400).json({ error: 'Operator ID is required' });
         }
 
@@ -266,7 +266,7 @@ exports.getAllConversations = async (req, res) => {
   try {
     const operatorId = requestContext.getOperatorId();
 
-    if (!operatorId) {
+    if (!operatorId && !requestContext.isSuperUser()) {
       return res.status(400).json({ error: 'Operator ID is required' });
     }
 
@@ -328,7 +328,7 @@ exports.getOneOnOneConversations = async (req, res) => {
         const operatorId = requestContext.getOperatorId();
         const phoneNumber = req.params.phoneNumber;
 
-        if (!operatorId) {
+        if (!operatorId && !requestContext.isSuperUser()) {
             return res.status(400).json({ error: 'Operator ID is required' });
         }
 

@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const applyOperatorScope = require('../utils/mongooseOperatorScope');
 
 const cashTransferSchema = new mongoose.Schema({
     amount: { type: Number, required: true },
@@ -14,5 +15,7 @@ const cashTransferSchema = new mongoose.Schema({
     },
     operatorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Operator', required: true }
 });
+
+cashTransferSchema.plugin(applyOperatorScope);
 
 module.exports = mongoose.model('CashTransfer', cashTransferSchema);

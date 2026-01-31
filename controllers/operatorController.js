@@ -74,13 +74,13 @@ exports.getPaymentOptions = async (req, res) => {
       return res.status(400).json({ message: 'Operator ID not found for the current user' });
     }
 
-    const paymentOptions = await OperatorService.getPaymentOptions(operatorId);
+    const paymentConfig = await OperatorService.getPaymentOptions(operatorId);
 
-    if (!paymentOptions) {
+    if (!paymentConfig) {
       return res.status(404).json({ message: 'Operator not found' });
     }
 
-    res.status(200).json({ paymentOptions });
+    res.status(200).json(paymentConfig);
 
   } catch (error) {
     console.error('Error fetching payment options:', error);

@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const applyOperatorScope = require("../utils/mongooseOperatorScope");
 
 const TravelStatusSchema = new mongoose.Schema(
   {
@@ -45,5 +46,7 @@ const TravelStatusSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+TravelStatusSchema.plugin(applyOperatorScope);
 
 module.exports = mongoose.model("TravelStatus", TravelStatusSchema);

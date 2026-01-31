@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const applyOperatorScope = require('../utils/mongooseOperatorScope');
 const { schema: whatsappMessageSchema } = require('./WhatsAppMessage');
 
 const whatsappConversationSchema = new mongoose.Schema({
@@ -20,6 +21,8 @@ const whatsappConversationSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
+
+whatsappConversationSchema.plugin(applyOperatorScope);
 
 whatsappConversationSchema.statics.CARGO_BOOKING_TYPE = "CargoBooking";
 whatsappConversationSchema.statics.BOOKING_FEEDBACK = "BookingFeedback";

@@ -6,6 +6,9 @@ exports.getTransactionsByOperator = async (operatorId, userId, page, limit) => {
   
   // Validate userId if provided - only use if it's a valid non-empty value
   const hasUserId = userId && userId.toString().trim() !== '' && mongoose.Types.ObjectId.isValid(userId);
+  const operatorObjectId = operatorId && mongoose.Types.ObjectId.isValid(operatorId)
+    ? new mongoose.Types.ObjectId(operatorId)
+    : null;
 
   const aggregationPipeline = [
     {
@@ -40,10 +43,12 @@ exports.getTransactionsByOperator = async (operatorId, userId, page, limit) => {
     {
       $match: {
         $or: [
-          {
-            type: { $in: ['Booking', 'Delivered'] },
-            'booking.operatorId': new mongoose.Types.ObjectId(operatorId)
-          },
+          operatorObjectId
+            ? {
+                type: { $in: ['Booking', 'Delivered'] },
+                'booking.operatorId': operatorObjectId
+              }
+            : { type: { $in: ['Booking', 'Delivered'] } },
           {
             type: 'Transfer',
             'cashTransfer.status': 'Approved'

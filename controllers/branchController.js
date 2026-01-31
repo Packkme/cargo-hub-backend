@@ -7,7 +7,7 @@ exports.createBranch = async (req, res) => {
     const operatorId = requestContext.getOperatorId();
     const userId = req.user._id;
 
-    if (!operatorId) {
+    if (!operatorId && !requestContext.isSuperUser()) {
       return res.status(400).json({ message: 'Operator ID is required' });
     }
 
@@ -41,7 +41,7 @@ exports.getBranches = async (req, res) => {
   try {
     const operatorId = requestContext.getOperatorId();
 
-    if (!operatorId) {
+    if (!operatorId && !requestContext.isSuperUser()) {
       return res.status(400).json({ message: 'Operator ID is required' });
     }
 
@@ -117,7 +117,7 @@ exports.deleteBranch = async (req, res) => {
 exports.searchBranches = async (req, res) => {
   try {
     const operatorId = requestContext.getOperatorId();
-    if (!operatorId) {
+    if (!operatorId && !requestContext.isSuperUser()) {
       return res.status(400).json({ message: 'Operator ID is required' });
     }
 

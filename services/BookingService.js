@@ -11,6 +11,7 @@ const UserService = require('./UserService');
 const whatsappService = require('../services/whatsappService');
 const generatePdfBuffer = require('../utils/bookingTemplate');
 const WhatsAppConversation = require('../models/WhatsAppConversation');
+const { buildOperatorFilter, appendOperatorFilter } = require('../utils/operatorFilter');
 
 const config = process.env;
 
@@ -112,22 +113,22 @@ class BookingService {
     logger.info('Fetching all bookings', { operatorId });
 
     try {
+      const baseFilter = buildOperatorFilter(operatorId);
       const [bookings, totalCount] = await Promise.all([
-        Booking.find({ operatorId })
+        Booking.find(baseFilter)
           .populate('fromOffice', 'name')
           .populate('toOffice', 'name')
           .populate('assignedVehicle', 'vehicleNumber')
           .populate('bookedBy', '_id fullName'),
-        Booking.countDocuments({ operatorId })
+        Booking.countDocuments(baseFilter)
       ]);
 
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
 
-      const todayCount = await Booking.countDocuments({
-        operatorId,
-        createdAt: { $gte: todayStart },
-      });
+      const todayCount = await Booking.countDocuments(
+        appendOperatorFilter({ createdAt: { $gte: todayStart } }, operatorId)
+      );
 
       logger.info('Successfully fetched all bookings', {
         totalCount,
@@ -146,11 +147,11 @@ class BookingService {
     }
   }
 
- static async getBookingById(id, operatorId, returnRaw = false) {
+  static async getBookingById(id, operatorId, returnRaw = false) {
     logger.info('Fetching booking by ID', { bookingId: id, operatorId });
 
     try {
-      const booking = await Booking.findOne({ _id: id, operatorId })
+      const booking = await Booking.findOne(appendOperatorFilter({ _id: id }, operatorId))
         .populate('fromOffice', '_id name address phone')
         .populate('toOffice', '_id name address phone')
         .populate('assignedVehicle', '_id vehicleNumber')
@@ -183,7 +184,7 @@ class BookingService {
     logger.info('Fetching booking by ID', { bookingId });
 
     try {
-      const booking = await Booking.findOne({ bookingId, operatorId })
+      const booking = await Booking.findOne(appendOperatorFilter({ bookingId }, operatorId))
         .populate('fromOffice', '_id name')
         .populate('toOffice', '_id name')
         .populate('assignedVehicle', '_id vehicleNumber')
@@ -359,7 +360,9 @@ class BookingService {
     });
 
     try {
-      const booking = await Booking.findOne({ _id: id, operatorId }).populate('fromOffice', 'name phone address').populate('toOffice', 'name phone address');
+      const booking = await Booking.findOne(
+        appendOperatorFilter({ _id: id }, operatorId)
+      ).populate('fromOffice', 'name phone address').populate('toOffice', 'name phone address');
 
       if (!booking) {
         logger.warn('Booking not found for update', { bookingId: id, operatorId });
@@ -455,7 +458,9 @@ class BookingService {
     });
 
     try {
-      const bookings = await Booking.find({ _id: { $in: updateData.bookings }, operatorId }).populate('fromOffice', 'name phone address').populate('toOffice', 'name phone address');
+      const bookings = await Booking.find(
+        appendOperatorFilter({ _id: { $in: updateData.bookings } }, operatorId)
+      ).populate('fromOffice', 'name phone address').populate('toOffice', 'name phone address');
 
       if (bookings.length !== updateData.bookings.length) {
         logger.warn('Some bookings not found for update', {
@@ -560,7 +565,7 @@ class BookingService {
     logger.info('Deleting booking', { bookingId: id, operatorId });
 
     try {
-      const booking = await Booking.findOneAndDelete({ _id: id, operatorId });
+      const booking = await Booking.findOneAndDelete(appendOperatorFilter({ _id: id }, operatorId));
       if (!booking) {
         logger.warn('Booking not found for deletion', { bookingId: id, operatorId });
         throw new Error('Booking not found');
@@ -590,15 +595,15 @@ class BookingService {
 
     try {
       const skip = (page - 1) * limit;
-      const baseFilter = {
-        operatorId,
+      const validBranchIds = (branchIds || []).filter(id => mongoose.Types.ObjectId.isValid(id));
+      const baseFilter = appendOperatorFilter({
         status: { $in: status ? [status] : ["Booked", "InTransit"] },
-        ...(branchIds.length > 0 && {
-          $or: branchIds.map(branchId => ({
+        ...(validBranchIds.length > 0 && {
+          $or: validBranchIds.map(branchId => ({
             fromOffice: branchId
           }))
         })
-      };
+      }, operatorId);
 
       if (query?.trim()) {
         const regex = new RegExp(query.trim(), 'i');
@@ -687,10 +692,9 @@ class BookingService {
 
     try {
       const skip = (page - 1) * limit;
-      const baseFilter = {
-        operatorId,
+      const baseFilter = appendOperatorFilter({
         assignedVehicle: { $ne: null },
-      };
+      }, operatorId);
 
       if (query?.trim()) {
         const regex = new RegExp(query.trim(), 'i');
@@ -778,15 +782,15 @@ class BookingService {
 
     try {
       const skip = (page - 1) * limit;
-      const baseFilter = {
+      const validBranchIds = (branchIds || []).filter(id => mongoose.Types.ObjectId.isValid(id));
+      const baseFilter = appendOperatorFilter({
         status: { $in: status ? [status] : ['InTransit', 'Booked', 'Arrived'] },
-        operatorId,
-        ...(branchIds.length > 0 && {
-          $or: branchIds.map(branchId => ({
+        ...(validBranchIds.length > 0 && {
+          $or: validBranchIds.map(branchId => ({
             fromOffice: branchId
           }))
         })
-      };
+      }, operatorId);
 
       if (query?.trim()) {
         const regex = new RegExp(query.trim(), 'i');
@@ -873,19 +877,19 @@ class BookingService {
     try {
       const skip = (page - 1) * limit;
 
-      const opId = mongoose.Types.ObjectId.isValid(operatorId)
+      const opId = operatorId && mongoose.Types.ObjectId.isValid(operatorId)
         ? new mongoose.Types.ObjectId(operatorId)
         : operatorId;
 
-      const baseFilter = {
+      const validBranchIds = (branchIds || []).filter(id => mongoose.Types.ObjectId.isValid(id));
+      const baseFilter = appendOperatorFilter({
         status: { $in: status ? [status] : ['Arrived', 'Booked'] },
-        operatorId: opId,
-        ...(branchIds.length > 0 && {
-          $or: branchIds.map(branchId => ({
+        ...(validBranchIds.length > 0 && {
+          $or: validBranchIds.map(branchId => ({
             fromOffice: branchId
           }))
         })
-      };
+      }, opId);
 
       if (query?.trim()) {
         const regex = new RegExp(query.trim(), 'i');
@@ -974,7 +978,7 @@ class BookingService {
     });
 
     try {
-      const mongoQuery = { operatorId };
+      const mongoQuery = buildOperatorFilter(operatorId);
 
     if (query.trim()) {
       const regex = new RegExp(query.trim(), "i");
@@ -1096,13 +1100,14 @@ class BookingService {
 
     try {
       // Search bookings for sender or receiver matching the phoneNumber under operatorId
-      const booking = await Booking.findOne({
-        operatorId,
-        $or: [
-          { senderPhone: phoneNumber },
-          { receiverPhone: phoneNumber }
-        ]
-      });
+      const booking = await Booking.findOne(
+        appendOperatorFilter({
+          $or: [
+            { senderPhone: phoneNumber },
+            { receiverPhone: phoneNumber }
+          ]
+        }, operatorId)
+      );
 
       if (!booking) {
         return null;
@@ -1143,4 +1148,3 @@ class BookingService {
 }
 
 module.exports = BookingService;
-

@@ -2,11 +2,13 @@ const mongoose = require('mongoose');
 const Vehicle = require('../models/Vehicle');
 const Operator = require('../models/Operator');
 const logger = require('../utils/logger');
+const { buildOperatorFilter, appendOperatorFilter } = require('../utils/operatorFilter');
 
 class VehicleService {
  static async getAllVehicles(operatorId) {
-  const availableFilter = { operatorId, status: 'Available' };
-  const allFilter = { operatorId };
+  const baseFilter = buildOperatorFilter(operatorId);
+  const availableFilter = { ...baseFilter, status: 'Available' };
+  const allFilter = baseFilter;
 
   const vehicles = await Vehicle.find(availableFilter).lean();
   const total = await Vehicle.countDocuments(allFilter); // all vehicles
@@ -23,10 +25,7 @@ class VehicleService {
     const regex = new RegExp(query, "i");
     const skip = (page - 1) * limit;
 
-    const queryConditions = {
-      operatorId,
-      vehicleNumber: regex,
-    };
+    const queryConditions = appendOperatorFilter({ vehicleNumber: regex }, operatorId);
 
     const total = await Vehicle.countDocuments(queryConditions);
     const vehicles = await Vehicle.find(queryConditions).skip(skip).limit(Number(limit)).lean();
@@ -84,10 +83,12 @@ class VehicleService {
   }
 
   static async updateVehicle(operatorId, vehicleId, updateData) {
-    const operatorExists = await Operator.exists({ _id: operatorId });
-    if (!operatorExists) throw new Error('Operator not found');
+    if (operatorId) {
+      const operatorExists = await Operator.exists({ _id: operatorId });
+      if (!operatorExists) throw new Error('Operator not found');
+    }
 
-    const vehicle = await Vehicle.findOne({ _id: vehicleId, operatorId });
+    const vehicle = await Vehicle.findOne(appendOperatorFilter({ _id: vehicleId }, operatorId));
     if (!vehicle) throw new Error('Vehicle not found or unauthorized');
 
     if (updateData.status && !["Available", "In Transit", "Maintenance"].includes(updateData.status)) {
@@ -100,7 +101,7 @@ class VehicleService {
   }
 
   static async deleteVehicle(operatorId, vehicleId) {
-    const vehicle = await Vehicle.findOneAndDelete({ _id: vehicleId, operatorId });
+    const vehicle = await Vehicle.findOneAndDelete(appendOperatorFilter({ _id: vehicleId }, operatorId));
     if (!vehicle) throw new Error('Vehicle not found');
 
     return { message: 'Vehicle deleted successfully' };

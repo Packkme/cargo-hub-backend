@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const applyOperatorScope = require('../utils/mongooseOperatorScope');
 
 const userSchema = new mongoose.Schema({
   //orgId
@@ -13,6 +14,8 @@ const userSchema = new mongoose.Schema({
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 },
 {timestamps: true});
+
+userSchema.plugin(applyOperatorScope);
 
 module.exports = mongoose.model('User', userSchema);
   

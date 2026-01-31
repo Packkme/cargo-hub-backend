@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const applyOperatorScope = require('../utils/mongooseOperatorScope');
 
 const bookingSchema = new mongoose.Schema({
   bookingId: { type: String },
@@ -107,5 +108,7 @@ getpackage: {
   }
 
 }, { timestamps: true });
+
+bookingSchema.plugin(applyOperatorScope);
 
 module.exports = mongoose.model('Booking', bookingSchema);

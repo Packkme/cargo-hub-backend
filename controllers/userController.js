@@ -8,10 +8,10 @@ const AppError = require('../utils/AppError');
  * Get all users for the current operator
  */
 exports.getUsers = catchAsync(async (req, res) => {
-  const operatorId = req.user?.operatorId;
+  const operatorId = requestContext.getOperatorId();
   const userRole = req.user?.role?.rolename;
   
-  if (!operatorId && userRole !== 'Super User') {
+  if (!operatorId && userRole !== 'SuperUser') {
     throw new AppError('Operator ID not found in user context', 400, 'MISSING_OPERATOR_ID');
   }
 
@@ -113,7 +113,7 @@ exports.searchUsers = async (req, res) => {
   const userId = req.user._id;
   try {
     const { query = "", page = 1, limit = 10 } = req.body;
-    const operatorId = req.user?.operatorId;
+    const operatorId = requestContext.getOperatorId();
     const operatorIdFromPayload = req.body.operatorId;
     
     // Get user's role information
@@ -155,7 +155,7 @@ exports.getTodayCargoBalance = async (req, res) => {
  */
 exports.getUserNames = catchAsync(async (req, res) => {
   const userRole = req.user?.role?.rolename;
-  const operatorId = req.user?.operatorId;
+  const operatorId = requestContext.getOperatorId();
   const users = await UserService.getUserNameByOperator(operatorId, userRole);
   // Map to only return userId and userName
   const mappedUsers = users.map(user => ({

@@ -12,7 +12,8 @@
     "dev": "nodemon app.js",
     "migrate": "node scripts/migrate.js",
     "migrate:rollback": "node scripts/migrate.js rollback",
-    "seed": "node scripts/seedData.js"
+    "seed": "node scripts/seedData.js",
+    "seed:today": "node scripts/seedTodayBookings.js"
   },
   "keywords": [],
   "author": "",

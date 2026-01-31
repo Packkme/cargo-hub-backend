@@ -85,17 +85,23 @@ pmx.action('set-log-level', (level, reply) => {
     }
 });
 
-// Add console transport for non-production environments
-if (process.env.NODE_ENV !== 'production') {
-    logger.add(new winston.transports.Console({
-        format: winston.format.combine(
+// Add console transport for all environments
+logger.add(new winston.transports.Console({
+    format: process.env.NODE_ENV !== 'production'
+        ? winston.format.combine(
             winston.format.colorize(),
             winston.format.printf(({ level, message, timestamp, ...metadata }) => {
                 const pid = process.pid;
                 return `${timestamp} [${pid}] ${level}: ${message} ${Object.keys(metadata).length ? JSON.stringify(metadata) : ''}`;
             })
         )
-    }));
-}
+        : winston.format.combine(
+            winston.format.timestamp({ format: timezoned }),
+            winston.format.printf(({ level, message, timestamp, ...metadata }) => {
+                const pid = process.pid;
+                return `${timestamp} [${pid}] ${level}: ${message} ${Object.keys(metadata).length ? JSON.stringify(metadata) : ''}`;
+            })
+        )
+}));
 
 module.exports = logger;

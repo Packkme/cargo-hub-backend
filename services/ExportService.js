@@ -34,16 +34,12 @@ const generateXLSXBuffer = (data, sheetName = 'Sheet1') => {
 };
 
 const exportBookings = async (operatorId) => {
-  if (!operatorId) throw new Error('Operator ID is required');
-
   const { bookings } = await BookingService.getAllBookings(operatorId);
   const flattened = flattenBookings(bookings);
   return generateXLSXBuffer(flattened, 'All Bookings');
 };
 
 const exportUnassignedBookings = async (operatorId, query = '') => {
-  if (!operatorId) throw new Error('Operator ID is required');
-
   const { bookings } = await BookingService.getUnassignedBookings(operatorId, 1, 10000, query);
   if (!bookings.length) throw new Error('No unassigned bookings found to export');
 
@@ -61,8 +57,6 @@ const exportUnassignedBookings = async (operatorId, query = '') => {
 };
 
 const exportArrivedBookings = async (operatorId, query = '') => {
-  if (!operatorId) throw new Error('Operator ID is required');
-
   const { bookings } = await BookingService.getArrivedBookings(operatorId, 1, 10000, query);
   if (!bookings.length) throw new Error('No arrived bookings found to export');
 
@@ -80,8 +74,6 @@ const exportArrivedBookings = async (operatorId, query = '') => {
 };
 
 const exportInTransitBookings = async (operatorId, query = '') => {
-  if (!operatorId) throw new Error('Operator ID is required');
-
   const { bookings } = await BookingService.getInTransitBookings(operatorId, 1, 10000, query);
   if (!bookings.length) throw new Error('No in-transit bookings found to export');
 

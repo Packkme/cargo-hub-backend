@@ -18,7 +18,7 @@ describe('userController.getUserNames', () => {
     req = {
       user: {
         operatorId: '507f1f77bcf86cd799439011',
-        role: { rolename: 'Super User' },
+        role: { rolename: 'SuperUser' },
       },
     };
 
@@ -30,7 +30,7 @@ describe('userController.getUserNames', () => {
     next = jest.fn();
   });
 
-  it('should return mapped users for Super User', async () => {
+  it('should return mapped users for SuperUser', async () => {
     const mockUsers = [
       {
         _id: { toString: () => '507f1f77bcf86cd799439012' },
@@ -48,7 +48,7 @@ describe('userController.getUserNames', () => {
 
     expect(UserService.getUserNameByOperator).toHaveBeenCalledWith(
       '507f1f77bcf86cd799439011',
-      'Super User'
+      'SuperUser'
     );
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({
@@ -65,7 +65,7 @@ describe('userController.getUserNames', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
-  it('should deny access for non Super Users', async () => {
+  it('should deny access for non SuperUsers', async () => {
     req.user.role.rolename = 'Admin';
 
     await userController.getUserNames(req, res, next);

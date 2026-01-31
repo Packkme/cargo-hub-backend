@@ -1,5 +1,6 @@
 const Role = require('../models/Role');
 const logger = require('../utils/logger');
+const { buildOperatorFilter, appendOperatorFilter } = require('../utils/operatorFilter');
 
 class RoleService {
   /**
@@ -52,7 +53,7 @@ static async getAllRoles(operatorId) {
   logger.info('Fetching roles for operator', { operatorId });
 
   try {
-    const roles = await Role.find({ operatorId });
+    const roles = await Role.find(buildOperatorFilter(operatorId));
     logger.debug(`Fetched ${roles.length} roles for operator ${operatorId}`);
     return roles;
   } catch (error) {
@@ -78,19 +79,12 @@ static async getAllRoles(operatorId) {
     logger.info('Searching roles', { operatorId, keyword, page, limit });
     
     try {
-      if (!operatorId) {
-        const error = new Error('Operator ID is required');
-        error.statusCode = 400;
-        throw error;
-      }
-
-      const query = {
-        operatorId,
+      const query = appendOperatorFilter({
         $or: [
           { rolename: { $regex: keyword, $options: 'i' } },
           { description: { $regex: keyword, $options: 'i' } }
         ]
-      };
+      }, operatorId);
 
       const [total, roles] = await Promise.all([
         Role.countDocuments(query),

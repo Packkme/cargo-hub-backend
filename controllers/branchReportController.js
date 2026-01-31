@@ -15,7 +15,7 @@ exports.getBranchReport = async (req, res) => {
   const operatorId = requestContext.getOperatorId();
   const userId = req.user?._id;
 
-  if (!date || !operatorId) {
+  if (!date || (!operatorId && !requestContext.isSuperUser())) {
     return res.status(400).json({ error: 'Date and operatorId are required' });
   }
 
@@ -124,7 +124,7 @@ exports.getRevenueReport = async (req, res) => {
   const operatorId = requestContext.getOperatorId();
   const userId = req.user?._id;
 
-  if (!date || !operatorId) {
+  if (!date || (!operatorId && !requestContext.isSuperUser())) {
     return res.status(400).json({ error: 'Date and operatorId are required' });
   }
 
@@ -260,7 +260,7 @@ exports.exportBranchReportExcel = async (req, res) => {
   const operatorId = requestContext.getOperatorId();
   const userId = req.user?._id;
 
-  if (!date || !operatorId) {
+  if (!date || (!operatorId && !requestContext.isSuperUser())) {
     return res.status(400).json({ error: 'Date and operatorId are required' });
   }
 
@@ -353,7 +353,7 @@ exports.exportRevenueReportExcel = async (req, res) => {
   const operatorId = requestContext.getOperatorId();
   const userId = req.user?._id;
 
-  if (!date || !operatorId) {
+  if (!date || (!operatorId && !requestContext.isSuperUser())) {
     return res.status(400).json({ error: 'Date and operatorId are required' });
   }
 

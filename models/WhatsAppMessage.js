@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const applyOperatorScope = require('../utils/mongooseOperatorScope');
 
 const whatsappMessageSchema = new mongoose.Schema({
   message: { type: String },
@@ -10,6 +11,8 @@ const whatsappMessageSchema = new mongoose.Schema({
   bookingId: { type: mongoose.Schema.Types.ObjectId, ref: 'Booking' },
   operatorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Operator'},
 });
+
+whatsappMessageSchema.plugin(applyOperatorScope);
 
 module.exports = {
   schema: whatsappMessageSchema,

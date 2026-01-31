@@ -4,8 +4,10 @@ const requestContext = require('../utils/requestContext');
 // GET /vehicles
 exports.getAllVehicles = async (req, res) => {
   try {
-    const operatorId = req.user.operatorId;
-    if (!operatorId) return res.status(400).json({ error: 'Operator ID is required' });
+    const operatorId = requestContext.getOperatorId();
+    if (!operatorId && !requestContext.isSuperUser()) {
+      return res.status(400).json({ error: 'Operator ID is required' });
+    }
 
     const result = await VehicleService.getAllVehicles(operatorId);
     res.json(result);
@@ -17,8 +19,10 @@ exports.getAllVehicles = async (req, res) => {
 // GET /vehicles/search
 exports.searchVehicles = async (req, res) => {
   try {
-    const operatorId = req.user.operatorId;
-    if (!operatorId) return res.status(400).json({ error: 'Operator ID is required' });
+    const operatorId = requestContext.getOperatorId();
+    if (!operatorId && !requestContext.isSuperUser()) {
+      return res.status(400).json({ error: 'Operator ID is required' });
+    }
 
     const { query = "", page = 1, limit = 10 } = req.body;
     const result = await VehicleService.searchVehicles(operatorId, query, page, limit);
@@ -57,8 +61,10 @@ exports.createVehicle = async (req, res) => {
 // PUT /vehicles/:id
 exports.updateVehicle = async (req, res) => {
   try {
-    const operatorId = req.user.operatorId;
-    if (!operatorId) return res.status(400).json({ error: 'Operator ID is required' });
+    const operatorId = requestContext.getOperatorId();
+    if (!operatorId && !requestContext.isSuperUser()) {
+      return res.status(400).json({ error: 'Operator ID is required' });
+    }
 
     const vehicle = await VehicleService.updateVehicle(operatorId, req.params.id, req.body);
     res.json(vehicle);
@@ -73,8 +79,10 @@ exports.updateVehicle = async (req, res) => {
 // DELETE /vehicles/:id
 exports.deleteVehicle = async (req, res) => {
   try {
-    const operatorId = req.user.operatorId;
-    if (!operatorId) return res.status(400).json({ error: 'Operator ID is required' });
+    const operatorId = requestContext.getOperatorId();
+    if (!operatorId && !requestContext.isSuperUser()) {
+      return res.status(400).json({ error: 'Operator ID is required' });
+    }
 
     const result = await VehicleService.deleteVehicle(operatorId, req.params.id);
     res.json(result);

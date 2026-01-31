@@ -2,19 +2,30 @@ const Booking = require('../models/Booking');
 const Branch = require('../models/Branch');
 const requestContext = require('../utils/requestContext');
 const mongoose = require('mongoose');
+const { buildOperatorFilter, appendOperatorFilter } = require('../utils/operatorFilter');
 
 // Get today's bookings segregated by payment type (ToPay/Paid)
-exports.getTodayBookingsByPayment = async () => {
+exports.getTodayBookingsByPayment = async ({ date } = {}) => {
     try {
-        const today = new Date().toISOString().split('T')[0];
         const operatorId = requestContext.getOperatorId();
+        let parsedDate;
+        if (date) {
+            parsedDate = new Date(date);
+            if (Number.isNaN(parsedDate.getTime())) {
+                const invalidDateError = new Error('Invalid date format. Use YYYY-MM-DD');
+                invalidDateError.statusCode = 400;
+                throw invalidDateError;
+            }
+        } else {
+            parsedDate = new Date();
+        }
+        const targetDate = parsedDate.toISOString().split('T')[0];
 
         const result = await Booking.aggregate([
             {
-                $match: {
-                    bookingDate: today,
-                    operatorId: operatorId
-                }
+                $match: appendOperatorFilter({
+                    bookingDate: targetDate
+                }, operatorId)
             },
             {
                 $group: {
@@ -48,22 +59,32 @@ exports.getTodayBookingsByPayment = async () => {
 };
 
 // Get ToPay and Paid bookings across all branches
-exports.getBookingsByBranchAndPayment = async () => {
+exports.getBookingsByBranchAndPayment = async ({ date } = {}) => {
     try {
         const operatorId = requestContext.getOperatorId();
-        const branches = await Branch.find({ operatorId });
+        const branches = await Branch.find(buildOperatorFilter(operatorId));
         const branchMap = new Map(branches.map(branch => [branch._id.toString(), branch.name]));
-        const validBranches = await Branch.find({ operatorId });
-        const validBranchIds = validBranches.map(branch => branch._id);
-        const today = new Date().toISOString().split('T')[0];
+        const validBranchIds = branches.map(branch => branch._id);
+
+        let parsedDate;
+        if (date) {
+            parsedDate = new Date(date);
+            if (Number.isNaN(parsedDate.getTime())) {
+                const invalidDateError = new Error('Invalid date format. Use YYYY-MM-DD');
+                invalidDateError.statusCode = 400;
+                throw invalidDateError;
+            }
+        } else {
+            parsedDate = new Date();
+        }
+        const targetDate = parsedDate.toISOString().split('T')[0];
 
         const result = await Booking.aggregate([
             {
-                $match: {
-                    operatorId: operatorId,
-                    bookingDate: today,
+                $match: appendOperatorFilter({
+                    bookingDate: targetDate,
                     fromOffice: { $in: validBranchIds }
-                }
+                }, operatorId)
             },
             {
                 $group: {
@@ -117,10 +138,9 @@ exports.getSixMonthBookings = async (month) => {
 
         const aggregatedBookings = await Booking.aggregate([
             {
-                $match: {
-                    operatorId: operatorId,
+                $match: appendOperatorFilter({
                     bookingDate: { $gte: startDate, $lte: endDate }
-                }
+                }, operatorId)
             },
             {
                 $group: {
@@ -176,15 +196,16 @@ exports.getPendingBookingsByBranch = async () => {
         const operatorId = requestContext.getOperatorId();
 
         // First, get all branches for the operator
-        const branches = await Branch.find({ operatorId });
+        const branches = await Branch.find(buildOperatorFilter(operatorId));
 
         // Get pending bookings grouped by branch and payment type
         const pendingDeliveries = await Booking.aggregate([
             {
-                $match: {
-                    operatorId: new mongoose.Types.ObjectId(operatorId),
+                $match: appendOperatorFilter({
                     status: { $in: ['Booked', 'InTransit', 'Arrived'] }
-                }
+                }, operatorId && mongoose.Types.ObjectId.isValid(operatorId)
+                    ? new mongoose.Types.ObjectId(operatorId)
+                    : operatorId)
             },
             {
                 $lookup: {
@@ -241,6 +262,181 @@ exports.getPendingBookingsByBranch = async () => {
         });
 
         return Object.values(formattedData);
+    } catch (error) {
+        throw error;
+    }
+};
+
+// Get booking totals per branch (Paid/ToPay sums)
+exports.getBookingTotalsByBranch = async ({ date } = {}) => {
+    try {
+        const operatorId = requestContext.getOperatorId();
+        let parsedDate;
+        if (date) {
+            parsedDate = new Date(date);
+            if (Number.isNaN(parsedDate.getTime())) {
+                const invalidDateError = new Error('Invalid date format. Use YYYY-MM-DD');
+                invalidDateError.statusCode = 400;
+                throw invalidDateError;
+            }
+        } else {
+            parsedDate = new Date();
+        }
+        const dateString = parsedDate.toISOString().split('T')[0];
+
+        const matchStage = {
+            bookingDate: dateString
+        };
+
+        if (operatorId) {
+            matchStage.operatorId = operatorId;
+        }
+
+        const pipeline = [
+            { $match: matchStage },
+            {
+                $lookup: {
+                    from: 'branches',
+                    localField: 'fromOffice',
+                    foreignField: '_id',
+                    as: 'branch'
+                }
+            },
+            { $unwind: '$branch' },
+            {
+                $group: {
+                    _id: {
+                        branchName: '$branch.name',
+                        paymentType: '$lrType'
+                    },
+                    totalAmount: {
+                        $sum: {
+                            $ifNull: ['$totalAmountCharge', 0]
+                        }
+                    }
+                }
+            }
+        ];
+
+        const aggregateResult = await Booking.aggregate(pipeline);
+        const branchTotals = {};
+
+        aggregateResult.forEach(item => {
+            const branchLabel = item._id.branchName || 'Unknown';
+            if (!branchTotals[branchLabel]) {
+                branchTotals[branchLabel] = {
+                    branchName: branchLabel,
+                    paid: 0,
+                    toPay: 0,
+                    total: 0
+                };
+            }
+
+            const paymentType = (item._id.paymentType || '').toLowerCase();
+            const amount = item.totalAmount || 0;
+            if (paymentType === 'topay') {
+                branchTotals[branchLabel].toPay = amount;
+            } else {
+                branchTotals[branchLabel].paid = amount;
+            }
+
+            branchTotals[branchLabel].total = branchTotals[branchLabel].paid + branchTotals[branchLabel].toPay;
+        });
+
+        return Object.values(branchTotals).sort((a, b) => a.branchName.localeCompare(b.branchName));
+    } catch (error) {
+        throw error;
+    }
+};
+
+
+// Get booking totals per user with optional filters
+exports.getBookingTotalsByUser = async ({ userName, bookingType = 'all', date } = {}) => {
+    try {
+        const operatorId = requestContext.getOperatorId();
+        const allowedTypes = ['paid', 'topay', 'all'];
+        const normalizedBookingType = allowedTypes.includes((bookingType || 'all').toLowerCase())
+            ? (bookingType || 'all').toLowerCase()
+            : 'all';
+
+        let parsedDate;
+        if (date) {
+            parsedDate = new Date(date);
+            if (Number.isNaN(parsedDate.getTime())) {
+                const invalidDateError = new Error('Invalid date format. Use YYYY-MM-DD');
+                invalidDateError.statusCode = 400;
+                throw invalidDateError;
+            }
+        } else {
+            parsedDate = new Date();
+        }
+        const dateString = parsedDate.toISOString().split('T')[0];
+
+        const matchStage = { bookingDate: dateString };
+
+        if (operatorId) {
+            matchStage.operatorId = operatorId;
+        }
+
+        if (normalizedBookingType !== 'all') {
+            matchStage.lrType = normalizedBookingType === 'paid' ? 'Paid' : 'ToPay';
+        }
+
+        const pipeline = [
+            { $match: matchStage },
+            { $match: { bookedBy: { $ne: null } } },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'bookedBy',
+                    foreignField: '_id',
+                    as: 'user'
+                }
+            },
+            { $unwind: '$user' }
+        ];
+
+        if (userName) {
+            pipeline.push({
+                $match: { 'user.fullName': { $regex: userName, $options: 'i' } }
+            });
+        }
+
+        pipeline.push({
+            $group: {
+                _id: {
+                    userName: '$user.fullName',
+                    paymentType: '$lrType'
+                },
+                totalAmount: {
+                    $sum: {
+                        $ifNull: ['$totalAmountCharge', 0]
+                    }
+                }
+            }
+        });
+
+        const aggregateResult = await Booking.aggregate(pipeline);
+        const userTotals = {};
+
+        aggregateResult.forEach(item => {
+            const label = item._id.userName || 'Unknown';
+            if (!userTotals[label]) {
+                userTotals[label] = { userName: label, paid: 0, toPay: 0, total: 0 };
+            }
+
+            const paymentType = (item._id.paymentType || '').toLowerCase();
+            const amount = item.totalAmount || 0;
+            if (paymentType === 'topay') {
+                userTotals[label].toPay = amount;
+            } else {
+                userTotals[label].paid = amount;
+            }
+
+            userTotals[label].total = userTotals[label].paid + userTotals[label].toPay;
+        });
+
+        return Object.values(userTotals).sort((a, b) => a.userName.localeCompare(b.userName));
     } catch (error) {
         throw error;
     }

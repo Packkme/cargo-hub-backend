@@ -15,7 +15,7 @@ class UserService {
   static async getUserNameByOperator(operatorId, userRole) {
     logger.info('Fetching users', { operatorId, userRole });
     
-    const isSuperUser = userRole === 'Super User';
+    const isSuperUser = userRole === 'SuperUser';
     
     if (!operatorId && !isSuperUser) {
       logger.error('Operator ID is required for fetching users');
@@ -23,7 +23,7 @@ class UserService {
     }
     
     try {
-      // For Super User, fetch all users; otherwise filter by operatorId
+      // For SuperUser, fetch all users; otherwise filter by operatorId
       const query = isSuperUser ? {} : { operatorId };
       const users = await User.find(query).select('fullName');
       logger.info('Successfully fetched users', { count: users.length, operatorId, isSuperUser });
@@ -242,7 +242,7 @@ class UserService {
   static async searchUsers({ query = "", page = 1, limit = 10, operatorId, operatorIdFromPayload, userRole }) {
     logger.info('Searching users', { query, page, limit, operatorId, operatorIdFromPayload, userRole });
     
-    const isSuperUser = userRole === 'Super User';
+    const isSuperUser = userRole === 'SuperUser';
     
     if (!operatorId && !isSuperUser) {
       logger.error('Operator ID is required for user search');
@@ -259,8 +259,8 @@ class UserService {
         ]
       } : {};
       
-      // For Super User, don't filter by operatorId
-      const baseQuery = isSuperUser ? ( operatorIdFromPayload ? { operatorId: operatorIdFromPayload, ...queryObj } : queryObj ) : { operatorId, ...queryObj };
+    // For SuperUser, don't filter by operatorId (ignore operatorId from payload)
+    const baseQuery = isSuperUser ? queryObj : { operatorId, ...queryObj };
       
       const [total, users] = await Promise.all([
         User.countDocuments(baseQuery),
