@@ -1,30 +1,21 @@
 const mongoose = require('mongoose');
-const { MongoMemoryServer } = require('mongodb-memory-server');
+const { connect, closeDatabase, clearDatabase } = require('../testHelpers');
 const Branch = require('../../models/Branch');
 const BranchService = require('../../services/BranchService');
 const logger = require('../../utils/logger');
 
 jest.mock('../../utils/logger');
 
-let mongoServer;
-
 beforeAll(async () => {
-  mongoServer = await MongoMemoryServer.create();
-  const uri = mongoServer.getUri();
-
-  await mongoose.connect(uri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  });
+  await connect();
 });
 
 afterAll(async () => {
-  await mongoose.disconnect();
-  await mongoServer.stop();
+  await closeDatabase();
 });
 
 afterEach(async () => {
-  await Branch.deleteMany({});
+  await clearDatabase();
   jest.clearAllMocks();
 });
 

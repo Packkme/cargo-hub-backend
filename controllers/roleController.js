@@ -1,5 +1,4 @@
 const RoleService = require('../services/RoleService');
-const requestContext = require('../utils/requestContext');
 const logger = require('../utils/logger');
 
 /**
@@ -9,10 +8,9 @@ const logger = require('../utils/logger');
  */
 exports.createRole = async (req, res) => {
   try {
-    const operatorId = requestContext.getOperatorId();
     const userId = req.user._id;
 
-    const role = await RoleService.createRole(req.body, operatorId, userId);
+    const role = await RoleService.createRole(req.body, userId);
 
     res.status(201).json({ message: 'Role created successfully', role });
   } catch (error) {
@@ -38,9 +36,7 @@ exports.createRole = async (req, res) => {
  */
 exports.getRoles = async (req, res) => {
   try {
-    const operatorId = requestContext.getOperatorId();
-
-    const roles = await RoleService.getAllRoles(operatorId);
+    const roles = await RoleService.getAllRoles();
 
     res.status(200).json({ roles });
   } catch (error) {
@@ -60,10 +56,9 @@ exports.getRoles = async (req, res) => {
  */
 exports.searchRoles = async (req, res) => {
   try {
-    const operatorId = requestContext.getOperatorId();
     const { keyword = '', page = 1, limit = 10 } = req.query;
     
-    const result = await RoleService.searchRoles(operatorId, {
+    const result = await RoleService.searchRoles({
       keyword,
       page: parseInt(page),
       limit: parseInt(limit)
@@ -149,4 +144,3 @@ exports.deleteRole = async (req, res) => {
     res.status(statusCode).json({ message });
   }
 };
-

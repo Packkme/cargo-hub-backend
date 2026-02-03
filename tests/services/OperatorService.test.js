@@ -1,24 +1,19 @@
 const mongoose = require('mongoose');
-const { MongoMemoryServer } = require('mongodb-memory-server');
+const { connect, closeDatabase, clearDatabase } = require('../testHelpers');
 
 const Operator = require('../../models/Operator');
 const OperatorService = require('../../services/OperatorService');
 
-let mongoServer;
-
 beforeAll(async () => {
-  mongoServer = await MongoMemoryServer.create();
-  await mongoose.connect(mongoServer.getUri(), {
-  });
+  await connect();
 });
 
 afterAll(async () => {
-  await mongoose.disconnect();
-  await mongoServer.stop();
+  await closeDatabase();
 });
 
 afterEach(async () => {
-  await Operator.deleteMany();
+  await clearDatabase();
 });
 
 describe('OperatorService.createOperator()', () => {

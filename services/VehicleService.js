@@ -7,7 +7,7 @@ const { buildOperatorFilter, appendOperatorFilter } = require('../utils/operator
 class VehicleService {
  static async getAllVehicles(operatorId) {
   const baseFilter = buildOperatorFilter(operatorId);
-  const availableFilter = { ...baseFilter, status: 'Available' };
+  const availableFilter = { ...baseFilter, status: true };
   const allFilter = baseFilter;
 
   const vehicles = await Vehicle.find(availableFilter).lean();
@@ -62,19 +62,13 @@ class VehicleService {
       throw new Error('Vehicle number already exists');
     }
 
-    // Validate status or assign default
-    const status = vehicleData.status || 'Available';
-    const validStatuses = ['Available', 'In Transit', 'Maintenance'];
-    if (!validStatuses.includes(status)) {
-      throw new Error(`Invalid vehicle status: ${status}`);
-    }
+    const status = typeof vehicleData.status === 'boolean' ? vehicleData.status : true;
 
     // Create and save vehicle
     const vehicle = new Vehicle({
-      ...vehicleData,
+      vehicleNumber: vehicleData.vehicleNumber,
       status,
-      operatorId,
-      createdBy
+      operatorId
     });
 
     await vehicle.save();
@@ -91,11 +85,15 @@ class VehicleService {
     const vehicle = await Vehicle.findOne(appendOperatorFilter({ _id: vehicleId }, operatorId));
     if (!vehicle) throw new Error('Vehicle not found or unauthorized');
 
-    if (updateData.status && !["Available", "In Transit", "Maintenance"].includes(updateData.status)) {
-      throw new Error(`Invalid vehicle status: ${updateData.status}`);
+    const updates = {};
+    if (typeof updateData.vehicleNumber === 'string') {
+      updates.vehicleNumber = updateData.vehicleNumber;
+    }
+    if (typeof updateData.status === 'boolean') {
+      updates.status = updateData.status;
     }
 
-    Object.assign(vehicle, updateData);
+    Object.assign(vehicle, updates);
     await vehicle.save();
     return vehicle;
   }

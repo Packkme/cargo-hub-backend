@@ -1,37 +1,19 @@
 const mongoose = require('mongoose');
 
-let mongod;
-const shouldInitMongo = process.env.JEST_SKIP_MONGO !== 'true';
+const { connect, closeDatabase, clearDatabase } = require('./testHelpers');
+const shouldInitMongo = process.env.JEST_SETUP_MONGO === 'true';
 
 if (shouldInitMongo) {
-  const { MongoMemoryServer } = require('mongodb-memory-server');
   beforeAll(async () => {
-    mongod = await MongoMemoryServer.create();
-    const uri = mongod.getUri();
-    
-    await mongoose.connect(uri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    await connect();
   });
 
   afterEach(async () => {
-    const collections = mongoose.connection.collections;
-    
-    for (const key in collections) {
-      const collection = collections[key];
-      await collection.deleteMany({});
-    }
+    await clearDatabase();
   });
 
   afterAll(async () => {
-    await mongoose.connection.dropDatabase();
-    await mongoose.connection.close();
-    await mongod.stop();
-  });
-} else {
-  beforeAll(() => {
-    // MongoDB in-memory server skipped for lightweight unit tests
+    await closeDatabase();
   });
 }
 

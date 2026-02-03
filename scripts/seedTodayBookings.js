@@ -152,33 +152,17 @@ const createUsers = async (operatorId, branches, usersPerBranch) => {
 
 const createVehicles = async (operatorId, branches, users, count) => {
   const vehicles = [];
-  const vehicleTypes = [
-    { type: 'Truck', capacity: '5000 kg' },
-    { type: 'Mini Truck', capacity: '2000 kg' },
-    { type: 'Pickup', capacity: '1000 kg' },
-    { type: 'Tempo', capacity: '1500 kg' },
-    { type: 'Van', capacity: '800 kg' },
-  ];
   const stateCodes = ['MH', 'DL', 'KA', 'TN', 'AP', 'TS', 'GJ', 'RJ', 'UP', 'WB'];
 
   for (let i = 0; i < count; i++) {
-    const vehicleType = faker.helpers.arrayElement(vehicleTypes);
     const stateCode = faker.helpers.arrayElement(stateCodes);
     const vehicleNumber = `${stateCode}${faker.number.int({ min: 1, max: 99 }).toString().padStart(2, '0')}` +
       `${String.fromCharCode(65 + Math.floor(Math.random() * 26))}${String.fromCharCode(65 + Math.floor(Math.random() * 26))}` +
       `${faker.number.int({ min: 1000, max: 9999 })}`;
-    const branch = faker.helpers.arrayElement(branches);
-    const driver = faker.helpers.arrayElement(users);
-
     const vehicle = await Vehicle.create({
       vehicleNumber,
-      type: vehicleType.type,
-      capacity: vehicleType.capacity,
-      driver: driver?.fullName || faker.person.fullName(),
-      status: 'Available',
-      currentLocation: branch?.name || 'Unknown',
+      status: true,
       operatorId,
-      createdBy: driver?._id || null,
     });
     vehicles.push(vehicle);
   }

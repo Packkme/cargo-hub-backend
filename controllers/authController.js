@@ -181,7 +181,7 @@ async function generateToken(user) {
 
 exports.verifyOTP = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).populate('role', 'rolename').populate('branchId', 'name');
+    const user = await User.findById(req.user._id);//.populate('role', 'rolename').populate('branchId', 'name');
     if (!user) {
       return res.status(400).json({ message: 'User not found' });
     }
@@ -191,6 +191,7 @@ exports.verifyOTP = async (req, res) => {
       const operator = await Operator.findById(user.operatorId);
       paymentOptions = operator?.paymentOptions || [];
     }
+    logger.info("User role found: here  role: " + user.role + " branchId: " + user.branchId +" operatorId: " + user.operatorId);
     
     const token = await generateToken(user);
     let roleName = user.role?.rolename || null;

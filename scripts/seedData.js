@@ -134,7 +134,7 @@ const seedData = async () => {
       operators.push(operator);
     }
 
-    // 3. Create Roles for each operator
+    // 3. Create Roles (global)
     const allRoles = [];
     const roleTemplates = [
       {
@@ -195,7 +195,6 @@ const seedData = async () => {
       rolename: 'SuperUser',
       description: 'System administrator with full access',
       permissions: createdPermissions.map(p => p._id),
-      operatorId: operators[0]._id,
       createdBy: superUser._id
     });
     allRoles.push(superUserRole);
@@ -203,18 +202,15 @@ const seedData = async () => {
     await User.findByIdAndUpdate(superUser._id, { role: superUserRole._id });
     console.log('Assigned SuperUser role to user with mobile 9999999991');
 
-    // Create other roles for all operators
-    for (const operator of operators) {
-      for (const template of roleTemplates.filter(t => t.rolename !== 'SuperUser')) {
-        const role = await Role.create({
-          rolename: template.rolename,
-          description: template.description,
-          permissions: createdPermissions.map(p => p._id),
-          operatorId: operator._id,
-          createdBy: superUser._id
-        });
-        allRoles.push(role);
-      }
+    // Create other roles (once)
+    for (const template of roleTemplates.filter(t => t.rolename !== 'SuperUser')) {
+      const role = await Role.create({
+        rolename: template.rolename,
+        description: template.description,
+        permissions: createdPermissions.map(p => p._id),
+        createdBy: superUser._id
+      });
+      allRoles.push(role);
     }
     console.log(`Created ${await Role.countDocuments()} roles`);
 
@@ -258,7 +254,7 @@ const seedData = async () => {
     
     // Create admin user for each operator
     for (const operator of operators) {
-      const adminRole = await Role.findOne({ operatorId: operator._id, rolename: 'Admin' });
+      const adminRole = await Role.findOne({ rolename: 'Admin' });
       const firstBranch = await Branch.findOne({ operatorId: operator._id });
       
       if (!adminRole) {
@@ -288,9 +284,9 @@ const seedData = async () => {
     // Create managers, staff, and drivers for each branch
     for (const branch of allBranches) {
       const operator = operators.find(op => op._id.toString() === branch.operatorId.toString());
-      const managerRole = await Role.findOne({ operatorId: operator._id, rolename: 'Branch Manager' });
-      const staffRole = await Role.findOne({ operatorId: operator._id, rolename: 'Staff' });
-      const driverRole = await Role.findOne({ operatorId: operator._id, rolename: 'Driver' });
+      const managerRole = await Role.findOne({ rolename: 'Branch Manager' });
+      const staffRole = await Role.findOne({ rolename: 'Staff' });
+      const driverRole = await Role.findOne({ rolename: 'Driver' });
       
       // Create branch manager
       const manager = await User.create({
@@ -329,63 +325,19 @@ const seedData = async () => {
 
     // 6. Create Vehicles for each operator
     const allVehicles = [];
-    const vehicleTypes = [
-      { type: 'Truck', capacity: '5000 kg' },
-      { type: 'Mini Truck', capacity: '2000 kg' },
-      { type: 'Pickup', capacity: '1000 kg' },
-      { type: 'Tempo', capacity: '1500 kg' },
-      { type: 'Bike', capacity: '50 kg' },
-      { type: 'Van', capacity: '800 kg' },
-      { type: 'Trailer', capacity: '10000 kg' },
-    ];
     const stateCodes = ['MH', 'DL', 'KA', 'TN', 'AP', 'TS', 'GJ', 'RJ', 'UP', 'WB'];
     
     for (const operator of operators) {
-      const operatorBranches = allBranches.filter(b => b.operatorId.toString() === operator._id.toString());
-      
-      // Find drivers for this operator
-      const driverRole = await Role.findOne({ operatorId: operator._id, rolename: 'Driver' });
-      if (!driverRole) {
-        console.error(`No Driver role found for operator ${operator.name}`);
-        continue;
-      }
-      
-      const drivers = allUsers.filter(u => 
-        u.operatorId && 
-        u.operatorId.toString() === operator._id.toString() &&
-        u.role && 
-        u.role.toString() === driverRole._id.toString()
-      );
-      
       for (let i = 0; i < VEHICLES_PER_OPERATOR; i++) {
-        const vehicleType = faker.helpers.arrayElement(vehicleTypes);
         const stateCode = faker.helpers.arrayElement(stateCodes);
         const vehicleNumber = `${stateCode}${faker.number.int({ min: 1, max: 99 }).toString().padStart(2, '0')}` +
           `${String.fromCharCode(65 + Math.floor(Math.random() * 26))}${String.fromCharCode(65 + Math.floor(Math.random() * 26))}` +
           `${faker.number.int({ min: 1000, max: 9999 })}`;
         
-        const statuses = ['Available', 'In Transit', 'Maintenance'];
-        const status = faker.helpers.arrayElement(statuses);
-        const currentBranch = faker.helpers.arrayElement(operatorBranches);
-        const driver = drivers.length > 0 ? faker.helpers.arrayElement(drivers) : null;
-        
         const vehicle = await Vehicle.create({
           vehicleNumber: vehicleNumber,
-          type: vehicleType.type,
-          capacity: vehicleType.capacity,
-          driver: driver ? driver.fullName : 'Unassigned',
-          driverId: driver ? driver._id : null,
-          status: status,
-          currentLocation: currentBranch.name,
-          currentBranchId: currentBranch._id,
+          status: Math.random() > 0.2,
           operatorId: operator._id,
-          lastMaintenanceDate: faker.date.past({ years: 1 }),
-          nextMaintenanceDate: faker.date.soon({ days: 180 }),
-          insuranceExpiry: faker.date.soon({ days: 365 }),
-          registrationNumber: vehicleNumber,
-          model: `${faker.vehicle.manufacturer()} ${faker.vehicle.model()}`,
-          year: faker.date.past({ years: 10 }).getFullYear(),
-          color: faker.vehicle.color(),
         });
         
         allVehicles.push(vehicle);

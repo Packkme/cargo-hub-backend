@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { MongoMemoryServer } = require('mongodb-memory-server');
+const { connect, closeDatabase, clearDatabase } = require('../testHelpers');
 const VehicleService = require('../../services/VehicleService');
 const Vehicle = require('../../models/Vehicle');
 const Operator = require('../../models/Operator');
@@ -10,25 +10,16 @@ jest.mock('../../utils/logger', () => ({
   error: jest.fn(),
 }));
 
-let mongoServer;
-
 beforeAll(async () => {
-  mongoServer = await MongoMemoryServer.create();
-  const uri = mongoServer.getUri();
-  await mongoose.connect(uri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  });
+  await connect();
 });
 
 afterAll(async () => {
-  await mongoose.disconnect();
-  await mongoServer.stop();
+  await closeDatabase();
 });
 
 afterEach(async () => {
-  await Vehicle.deleteMany({});
-  await Operator.deleteMany({});
+  await clearDatabase();
 });
 
 describe('VehicleService.createVehicle', () => {
@@ -41,11 +32,7 @@ describe('VehicleService.createVehicle', () => {
 
     const vehicleData = {
       vehicleNumber: 'TN01AB1234',
-      type: 'Truck',
-      capacity: '15 Tons',
-      driver: 'John Doe',
-      status: 'Available',
-      currentLocation: 'Chennai',
+      status: true,
     };
 
     const createdBy = new mongoose.Types.ObjectId();
@@ -55,18 +42,13 @@ describe('VehicleService.createVehicle', () => {
     expect(vehicle).toHaveProperty('_id');
     expect(vehicle.vehicleNumber).toBe(vehicleData.vehicleNumber);
     expect(vehicle.operatorId.toString()).toBe(operator._id.toString());
-    expect(vehicle.createdBy.toString()).toBe(createdBy.toString());
-    expect(vehicle.status).toBe('Available');
+    expect(vehicle.status).toBe(true);
   });
 
   it('should throw an error if operator does not exist', async () => {
     const fakeOperatorId = new mongoose.Types.ObjectId();
     const vehicleData = {
       vehicleNumber: 'TN01AB1234',
-      type: 'Truck',
-      capacity: '15 Tons',
-      driver: 'John Doe',
-      currentLocation: 'Chennai',
     };
     const createdBy = new mongoose.Types.ObjectId();
 
@@ -84,15 +66,11 @@ describe('VehicleService.createVehicle', () => {
 
     const vehicleData = {
       vehicleNumber: 'TN01AB1234',
-      type: 'Truck',
-      capacity: '15 Tons',
-      driver: 'John Doe',
-      currentLocation: 'Chennai',
     };
     const createdBy = new mongoose.Types.ObjectId();
 
     // Create a vehicle first
-    await Vehicle.create({ ...vehicleData, operatorId: operator._id, createdBy });
+    await Vehicle.create({ ...vehicleData, operatorId: operator._id });
 
     // Try to create the same vehicle again
     await expect(
@@ -100,7 +78,7 @@ describe('VehicleService.createVehicle', () => {
     ).rejects.toThrow('Vehicle number already exists');
   });
 
-  it('should throw an error if status is invalid', async () => {
+  it('should default status to true when not provided', async () => {
     const operator = await Operator.create({
       name: 'Test Operator',
       phone: '9876543210',
@@ -109,16 +87,10 @@ describe('VehicleService.createVehicle', () => {
 
     const vehicleData = {
       vehicleNumber: 'TN01AB5678',
-      type: 'Truck',
-      capacity: '15 Tons',
-      driver: 'John Doe',
-      status: 'Flying', // Invalid status
-      currentLocation: 'Chennai',
     };
     const createdBy = new mongoose.Types.ObjectId();
 
-    await expect(
-      VehicleService.createVehicle(operator._id, vehicleData, createdBy)
-    ).rejects.toThrow('Invalid vehicle status: Flying');
+    const vehicle = await VehicleService.createVehicle(operator._id, vehicleData, createdBy);
+    expect(vehicle.status).toBe(true);
   });
 });

@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { MongoMemoryServer } = require('mongodb-memory-server');
+const { connect, closeDatabase, clearDatabase } = require('../testHelpers');
 const bcrypt = require('bcryptjs');
 
 const UserService = require('../../services/UserService');
@@ -7,16 +7,16 @@ const User = require('../../models/User');
 const Role = require('../../models/Role');
 const Branch = require('../../models/Branch');
 
-let mongoServer;
-
 beforeAll(async () => {
-  mongoServer = await MongoMemoryServer.create();
-  await mongoose.connect(mongoServer.getUri());
+  await connect();
 });
 
 afterAll(async () => {
-  await mongoose.disconnect();
-  await mongoServer.stop();
+  await closeDatabase();
+});
+
+afterEach(async () => {
+  await clearDatabase();
 });
 
 afterEach(async () => {

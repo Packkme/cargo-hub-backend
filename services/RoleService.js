@@ -1,6 +1,5 @@
 const Role = require('../models/Role');
 const logger = require('../utils/logger');
-const { buildOperatorFilter, appendOperatorFilter } = require('../utils/operatorFilter');
 
 class RoleService {
   /**
@@ -9,14 +8,14 @@ class RoleService {
    * @param {string} operatorId - ID of the operator
    * @returns {Promise<Object>} Created role
    */
-  static async createRole(roleData, operatorId, createdBy) {
-  logger.info('Creating new role', { rolename: roleData.rolename, operatorId, createdBy });
+  static async createRole(roleData, createdBy) {
+  logger.info('Creating new role', { rolename: roleData.rolename, createdBy });
   
   try {
     const { rolename, description, permissions } = roleData;
 
-    if (!rolename || !description || !operatorId || !createdBy) {
-      const error = new Error('Rolename, description, operatorId, and createdBy are required');
+    if (!rolename || !description || !createdBy) {
+      const error = new Error('Rolename, description, and createdBy are required');
       error.statusCode = 400;
       throw error;
     }
@@ -25,19 +24,17 @@ class RoleService {
       rolename,
       description,
       permissions: permissions || [],
-      operatorId,
       createdBy,
     });
 
     await role.save();
 
-    logger.info('Role created successfully', { roleId: role._id, operatorId, createdBy });
+    logger.info('Role created successfully', { roleId: role._id, createdBy });
     return role;
   } catch (error) {
     logger.error('Failed to create role', {
       error: error.message,
       rolename: roleData.rolename,
-      operatorId,
       createdBy,
       stack: error.stack
     });
@@ -49,17 +46,16 @@ class RoleService {
    * Get all roles
    * @returns {Promise<Array>} List of all roles
    */
-static async getAllRoles(operatorId) {
-  logger.info('Fetching roles for operator', { operatorId });
+static async getAllRoles() {
+  logger.info('Fetching roles');
 
   try {
-    const roles = await Role.find(buildOperatorFilter(operatorId));
-    logger.debug(`Fetched ${roles.length} roles for operator ${operatorId}`);
+    const roles = await Role.find({});
+    logger.debug(`Fetched ${roles.length} roles`);
     return roles;
   } catch (error) {
     logger.error('Failed to fetch roles', {
       error: error.message,
-      operatorId,
       stack: error.stack
     });
     throw error;
@@ -75,16 +71,16 @@ static async getAllRoles(operatorId) {
    * @param {number} options.limit - Items per page
    * @returns {Promise<Object>} Paginated roles
    */
-  static async searchRoles(operatorId, { keyword = '', page = 1, limit = 10 } = {}) {
-    logger.info('Searching roles', { operatorId, keyword, page, limit });
+  static async searchRoles({ keyword = '', page = 1, limit = 10 } = {}) {
+    logger.info('Searching roles', { keyword, page, limit });
     
     try {
-      const query = appendOperatorFilter({
+      const query = {
         $or: [
           { rolename: { $regex: keyword, $options: 'i' } },
           { description: { $regex: keyword, $options: 'i' } }
         ]
-      }, operatorId);
+      };
 
       const [total, roles] = await Promise.all([
         Role.countDocuments(query),
@@ -104,7 +100,6 @@ static async getAllRoles(operatorId) {
     } catch (error) {
       logger.error('Failed to search roles', {
         error: error.message,
-        operatorId,
         keyword,
         stack: error.stack
       });

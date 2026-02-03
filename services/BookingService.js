@@ -883,7 +883,7 @@ class BookingService {
 
       const validBranchIds = (branchIds || []).filter(id => mongoose.Types.ObjectId.isValid(id));
       const baseFilter = appendOperatorFilter({
-        status: { $in: status ? [status] : ['Arrived', 'Booked'] },
+        status: { $in: status ? [status] : ['Arrived', 'Booked', 'InTransit'] },
         ...(validBranchIds.length > 0 && {
           $or: validBranchIds.map(branchId => ({
             fromOffice: branchId

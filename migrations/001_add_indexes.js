@@ -36,7 +36,7 @@ module.exports = {
     await db.collection('cashtransfers').createIndex({ operatorId: 1, fromBranch: 1, toBranch: 1 });
     
     // Role indexes
-    await db.collection('roles').createIndex({ operatorId: 1, rolename: 1 }, { unique: true });
+    await db.collection('roles').createIndex({ rolename: 1 }, { unique: true });
     
     console.log('Performance indexes created successfully');
   },
@@ -67,7 +67,7 @@ module.exports = {
     await db.collection('cashtransfers').dropIndex({ operatorId: 1, createdAt: -1 });
     await db.collection('cashtransfers').dropIndex({ operatorId: 1, fromBranch: 1, toBranch: 1 });
     
-    await db.collection('roles').dropIndex({ operatorId: 1, rolename: 1 });
+    await db.collection('roles').dropIndex({ rolename: 1 });
     
     console.log('Performance indexes removed successfully');
   }
