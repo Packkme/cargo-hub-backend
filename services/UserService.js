@@ -7,6 +7,82 @@ const logger = require('../utils/logger');
 
 class UserService {
   /**
+   * Get all users for an operator (or all if SuperUser)
+   * @param {string} operatorId - The operator ID
+   * @param {string} userRole - Current user's role name
+   * @returns {Promise<Array>} List of users
+   */
+  static async getUsers(operatorId, userRole) {
+    logger.info('Fetching all users', { operatorId, userRole });
+
+    const isSuperUser = userRole === 'SuperUser';
+    if (!operatorId && !isSuperUser) {
+      logger.error('Operator ID is required for fetching users');
+      throw new Error('Operator ID is required');
+    }
+
+    try {
+      const query = isSuperUser ? {} : { operatorId };
+      const users = await User.find(query)
+        .populate('role')
+        .populate('operatorId', '_id name')
+        .populate('branchId', '_id name');
+
+      logger.info('Successfully fetched users', {
+        count: users.length,
+        operatorId,
+        isSuperUser
+      });
+
+      return users;
+    } catch (error) {
+      logger.error('Error fetching users', {
+        error: error.message,
+        operatorId,
+        userRole,
+        stack: error.stack
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Get user balances for an operator (or all if SuperUser)
+   * @param {string} operatorId - The operator ID
+   * @param {string} userRole - Current user's role name
+   * @returns {Promise<Array>} List of user balances
+   */
+  static async getUserBalances(operatorId, userRole) {
+    logger.info('Fetching user balances', { operatorId, userRole });
+
+    const isSuperUser = userRole === 'SuperUser';
+    if (!operatorId && !isSuperUser) {
+      logger.error('Operator ID is required for fetching user balances');
+      throw new Error('Operator ID is required');
+    }
+
+    try {
+      const query = isSuperUser ? {} : { operatorId };
+      //get all users with cargoBalance greater than 0 and sort by cargoBalance in descending order 
+      const users = await User.find(query).
+      where('cargoBalance').gt(0).select('fullName cargoBalance');
+
+      return users.map(user => ({
+        userId: user._id.toString(),
+        fullName: user.fullName,
+        cargoBalance: user.cargoBalance || 0
+      }));
+    } catch (error) {
+      logger.error('Error fetching user balances', {
+        error: error.message,
+        operatorId,
+        userRole,
+        stack: error.stack
+      });
+      throw error;
+    }
+  }
+  /**
    * Get all users for an operator
    * @param {string} operatorId - The operator ID
    * @param {string} userRole - Current user's role name

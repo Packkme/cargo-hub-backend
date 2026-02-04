@@ -89,11 +89,41 @@ exports.getBookingTotalsByBranch = async (req, res) => {
     }
 };
 
+// Branch-to-branch booking totals for a source branch
+exports.getBookingTotalsByBranchDestination = async (req, res) => {
+    try {
+        const { fromBranchId, date } = req.query;
+        const data = await chartService.getBookingTotalsByBranchDestination({ fromBranchId, date });
+        res.json({ success: true, data });
+    } catch (error) {
+        const statusCode = error.statusCode || 500;
+        res.status(statusCode).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
 // User-level booking totals tile
 exports.getBookingTotalsByUser = async (req, res) => {
     try {
         const { userName, bookingType, date } = req.query;
         const data = await chartService.getBookingTotalsByUser({ userName, bookingType, date });
+        res.json({ success: true, data });
+    } catch (error) {
+        const statusCode = error.statusCode || 500;
+        res.status(statusCode).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+// User-to-branch booking totals for a source user
+exports.getBookingTotalsByUserDestination = async (req, res) => {
+    try {
+        const { fromUserId, date } = req.query;
+        const data = await chartService.getBookingTotalsByUserDestination({ fromUserId, date });
         res.json({ success: true, data });
     } catch (error) {
         const statusCode = error.statusCode || 500;

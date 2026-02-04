@@ -11,6 +11,8 @@ router.get('/branchBookings', chartController.getBookingsByBranchAndPayment);
 router.get('/sixMonthBookings', chartController.getSixMonthBookings);
 router.get('/pendingBookingsByBranch', chartController.getPendingBookingsByBranch);
 router.get('/dashboard/booking-totals-by-branch', chartController.getBookingTotalsByBranch);
+router.get('/dashboard/booking-totals-by-branch-destination', chartController.getBookingTotalsByBranchDestination);
 router.get('/dashboard/booking-totals-by-user', chartController.getBookingTotalsByUser);
+router.get('/dashboard/booking-totals-by-user-destination', chartController.getBookingTotalsByUserDestination);
 
 module.exports = router;

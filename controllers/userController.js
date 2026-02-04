@@ -172,3 +172,21 @@ exports.getUserNames = catchAsync(async (req, res) => {
     }
   });
 });
+
+/**
+ * Get user balances for the current operator
+ */
+exports.getUserBalances = catchAsync(async (req, res) => {
+  const userRole = req.user?.role?.rolename;
+  const operatorId = requestContext.getOperatorId();
+  const users = await UserService.getUserBalances(operatorId, userRole);
+
+  res.status(200).json({
+    success: true,
+    status: 'success',
+    data: {
+      users,
+      count: users.length
+    }
+  });
+});
